@@ -45,10 +45,10 @@ class Gui:
 		self.image_position = ((sc_w - new_w) // 2, (sc_h - new_h) // 2)
 
 		if size_changed:
-			self.resized_image = pygame.transform.smoothscale(self.source_image, (new_w, new_h))
+			self.resized_image = pygame.transform.scale(self.source_image, (new_w, new_h))
 
 		if size_changed or draw_changed:
-			self.resized_scribbles = pygame.transform.smoothscale(self.scribbles, (new_w, new_h))
+			self.resized_scribbles = pygame.transform.scale(self.scribbles, (new_w, new_h))
 			self.screen.fill((0, 0, 0))
 			self.screen.blit(self.resized_image, self.image_position)
 			self.screen.blit(self.resized_scribbles, self.image_position)
@@ -156,4 +156,4 @@ class Gui:
 			# --- UPDATING SCREEN ---
 			self.update_screen(size_changed, draw_changed)
 			pygame.display.flip()
-			clock.tick(60)
+			clock.tick(120)
