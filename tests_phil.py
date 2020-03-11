@@ -2,6 +2,8 @@ import image_segmentation as seg
 import numpy as np
 import cv2
 from collections import defaultdict
+from tqdm import tqdm
+import time
 
 
 def find_scribbles(sriblled_img):
@@ -80,8 +82,7 @@ def terminal_color_proba(val, mu, sig, classe):
 def terminal_class_proba(value, mu, sig, classe):
     P_f = terminal_color_proba(value, mu, sig, 'F')
     P_b = terminal_color_proba(value, mu, sig, 'B')
-    print(P_b)
-    print(P_f)
+
     if classe == 'F':
         return P_f / (P_f + P_b)
 
@@ -112,10 +113,10 @@ def seg_func_dummy(img, scrib):
     w = np.zeros((1, width, color))
 
     # Initialize the matrices to compute the weights of top, bottom, left and right neighbours
-    img_top = np.delete(np.vstack((w, img_rgb)), h, 0)
+    img_top = np.delete(np.vstack((w, img_rgb)), height, 0)
     img_bot = np.delete(np.vstack((img_rgb, w)), 0, 0)
     img_rgt = np.delete(np.hstack((img_rgb, h)), 0, 1)
-    img_lft = np.delete(np.hstack((h, img_rgb)), w, 1)
+    img_lft = np.delete(np.hstack((h, img_rgb)), width, 1)
 
     # Compute the norm of neighbours pixels
     top_norm = np.linalg.norm((img_rgb - img_top), axis=2)
@@ -131,24 +132,26 @@ def seg_func_dummy(img, scrib):
 
     # Compute terminal edges weights
     lam = 10
-    W_iF = np.zeros((img_yuv.shape))
-    W_iB = np.zeros((img_yuv.shape))
-    for x in range(h):
-        for y in range(w):
+    W_iF = np.zeros((height, width))
+    W_iB = np.zeros((height, width))
+    for x in tqdm(range(height)):
+        for y in range(width):
             W_iF[x, y] = -lam * np.log10(terminal_class_proba(img_yuv[x, y], mu, Sigma, 'F'))
             W_iB[x, y] = -lam * np.log10(terminal_class_proba(img_yuv[x, y], mu, Sigma, 'B'))
-
     #W_iF = -lam * np.log10(terminal_class_proba(img_yuv, mu, Sigma, 'F'))
     #W_iB = -lam * np.log10(terminal_class_proba(img_yuv, mu, Sigma, 'B'))
 
     print(mu)
     print('---' * 10)
     print(Sigma)
-    #print('---'*10)
-    #print(W_iF)
-    #print('---'*10)
-    #print(W_iB)
-
+    print('---'*10)
+    print(W_iF)
+    print('---'*10)
+    print(W_iB)
+    print('---' * 10)
+    print(W_iF.shape)
+    print('---' * 10)
+    print(W_iB.shape)
     return scrib
 
 
