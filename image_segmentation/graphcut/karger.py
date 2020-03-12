@@ -18,9 +18,6 @@ class Graph:
 	def __len__(self):
 		return len(self.nodes)
 
-	def nb_edges(self):
-		return sum(len(edges) for node, edges in self.nodes.items()) // 2
-
 	def __repr__(self):
 		result = "--- Graph: ---\n"
 		result += str(self.nodes) + "\n"
@@ -34,6 +31,7 @@ class Graph:
 
 	def add_node(self, node):
 		self.nodes[node] = defaultdict(float)
+		self.groups[node] = [node]
 		if node >= 2:
 			self.available_nodes.append(node)
 
@@ -57,7 +55,7 @@ class Graph:
 		# return keys[np.random.choice(np.arange(len(keys)), 1, p=weights)[0]]
 
 	def contract_edge(self, n1, n2):
-		# self.groups[n1].append(n2)
+		self.groups[n1] += self.groups[n2]
 
 		l1 = self.nodes[n1]
 		l1.pop(n2)
@@ -70,31 +68,6 @@ class Graph:
 				ldst.pop(n2)
 				ldst[n1] += w
 				l1[dst] += w
-
-	# def load_graph(self, file_name):
-	# 	file = open(file_name, 'r')
-	# 	lines = file.readlines()
-	# 	file.close()
-	#
-	# 	lines = map(lambda s: re.sub(r'\s+', ' ', str(s.strip('\r\n'))).strip(), lines)
-	# 	lines = list(map(lambda s: s.split(' '), lines))
-	#
-	# 	for line in lines:
-	# 		self.add_node(int(line[0]))
-	#
-	# 	for line in lines:
-	# 		src = int(line[0])
-	# 		for dst in list(map(lambda s: int(s), line[1:])):
-	# 			self.add_edge(src, dst, 1)
-
-	# def random_graph(self, n_nodes, edge_prob):
-	# 	for ni in range(n_nodes):
-	# 		self.add_node(ni)
-	#
-	# 	for u in range(n_nodes):
-	# 		for v in range(u + 1, n_nodes):
-	# 			if random.random() <= edge_prob:
-	# 				self.add_edge(u, v, 1)
 
 	def random_grid_graph(self, side):
 		# Create graph, as we would like
@@ -131,11 +104,11 @@ avg_time = None
 for i in range(n):
 	g = Graph()
 	# g.load_graph('kargerMinCut.txt')
-	g.random_grid_graph(200)
+	g.random_grid_graph(100)
 	while len(g) > 2:
+		now = time.time()
 		re = g.get_random_edge()
 
-		now = time.time()
 		g.contract_edge(*re)
 		elapsed = time.time() - now
 
@@ -148,7 +121,10 @@ for i in range(n):
 		print("\r", len(g), '{:.3f}us'.format(avg_time * 1000000), end="")
 
 	print("\n")
-	lengths[i] = min([1 if not isinstance(node, Node) else len(node.subnodes) for node in g.nodes])
+	print(len(g.groups[0]))
+	print(len(g.groups[1]))
+	# lengths[i] = min([1 if not isinstance(node, Node) else len(node.subnodes) for node in g.nodes])
+	# lengths[i] = min([1 if not isinstance(node, Node) else len(node.subnodes) for node in g.nodes])
 
 plt.hist(lengths)
 plt.show()

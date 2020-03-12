@@ -107,6 +107,7 @@ class Gui:
 						np_image = pygame.surfarray.array3d(self.source_image)
 						np_scribbles = pygame.surfarray.array3d(self.scribbles)
 
+						# pygame.quit()
 						np_scribbles = self.segmentation_function(np_image, np_scribbles)
 
 						rgb_scribbles = pygame.surfarray.pixels3d(self.scribbles)

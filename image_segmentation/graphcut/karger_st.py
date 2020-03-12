@@ -84,7 +84,7 @@ class Graph:
 					ldst[1] += w
 
 		else:
-			# self.groups[n1].append(n2)
+			self.groups[n1].append(n2)
 
 			l1 = self.nodes[n1]
 			l1.pop(n2)
@@ -136,7 +136,7 @@ avg_time = None
 for i in range(n):
 	g = Graph()
 	# g.load_graph('kargerMinCut.txt')
-	g.random_grid_graph(200)
+	g.random_grid_graph(500)
 	while len(g) > 2:
 		re = g.get_random_edge()
 
@@ -154,6 +154,7 @@ for i in range(n):
 
 	print("\n")
 	lengths[i] = g.source[1]
+
 	# lengths[i] = min([1 if not isinstance(node, Node) else len(node.subnodes) for node in g.nodes])
 
 plt.hist(lengths)
