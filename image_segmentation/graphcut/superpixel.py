@@ -10,18 +10,21 @@ import image_segmentation as seg
 class SuperPixel:
 	def __init__(self, sid):
 		self.sid: int = sid
-		self.neighbours: Dict[Tuple[int, int], List[float]] = defaultdict(list)
+		self.neighbours: Dict[Tuple[int, int], List[float, float]] = defaultdict(list)
+		self.captured_neighbours: Dict[Tuple[int, int], List[float]] = defaultdict(list)
 
-	def get_weighted_neigbours(self, divided_img):
+	def get_weighted_neigbours(self, divided_img, pixeliser):
 		neighbours = []
 		weights = []
 		to_remove = []
 		for i, (nei, ws) in enumerate(self.neighbours.items()):
-			if divided_img[nei] != 0:
+			other_region = divided_img[nei]
+			if other_region != 0:
 				to_remove.append(nei)
+				self.captured_neighbours[nei] = [w for _, w in ws]
 			else:
 				neighbours.append(nei)
-				weights.append(sum(ws) / 3)
+				weights.append(sum(w for w, _ in ws) / 3)
 				# weights.append(sum(ws) / len(ws))
 
 		for to_rem in to_remove:
@@ -36,7 +39,7 @@ class SuperPixel:
 		neighbours = [(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)]
 		for nei in neighbours:
 			if divided_img[nei] == 0:
-				self.neighbours[nei].append(pixeliser.get_weight(x, y, *nei))
+				self.neighbours[nei].append(pixeliser.get_weights(x, y, *nei))
 
 	def capture_pixel(self, coords, divided_img, pixeliser):
 		divided_img[coords] = self.sid
@@ -52,6 +55,8 @@ class SuperPixeliser:
 		self.source_img = source_img
 		self.w = source_img.shape[0]
 		self.h = source_img.shape[1]
+		self.weights_vert_hard = None
+		self.weights_hori_hard = None
 		self.weights_vert = None
 		self.weights_hori = None
 		self.divided_img = np.zeros((self.w + 2, self.h + 2), dtype=int)
@@ -63,9 +68,11 @@ class SuperPixeliser:
 		self.superpixels: List[SuperPixel] = []
 		self.colors = []
 
-	def initialize_weights(self, weights_vert, weights_hori):
+	def initialize_weights(self, weights_vert, weights_hori, weights_vert_hard, weights_hori_hard):
 		self.weights_vert = weights_vert
 		self.weights_hori = weights_hori
+		self.weights_vert_hard = weights_vert_hard
+		self.weights_hori_hard = weights_hori_hard
 
 	def initialize_seeds(self):
 		density = self.nb_superpixels / (self.w * self.h)
@@ -90,7 +97,7 @@ class SuperPixeliser:
 				region_end_y = region_start_y + region_h
 
 				area = region_w * region_h
-				region_seeds = int(area * density)
+				region_seeds = int(math.ceil(area * density))
 
 				for _ in range(region_seeds):
 					seed_x = seed_y = None
@@ -108,8 +115,6 @@ class SuperPixeliser:
 					self.divided_img[seed_x, seed_y] = seed_id
 
 					n_seeds += 1
-					print("\r", n_seeds, end="")
-		print("")
 
 	def grow_superpixels(self, verbose=True):
 		it = 0
@@ -117,7 +122,7 @@ class SuperPixeliser:
 		while np.count_nonzero(self.divided_img) != (self.h + 2) * (self.w + 2):
 			it += 1
 			for sp in self.superpixels:
-				current_neighbours, current_weights = sp.get_weighted_neigbours(self.divided_img)
+				current_neighbours, current_weights = sp.get_weighted_neigbours(self.divided_img, self)
 
 				if current_neighbours is None:
 					continue
@@ -141,24 +146,67 @@ class SuperPixeliser:
 			if verbose:
 				current = np.count_nonzero(self.divided_img) - self.h * 2 - self.w * 2
 				print("\rSuper-Pixelisation: {:.2f}%".format(current / total * 100), end="")
+		print("")
 
-	def create_graph(self, vert_w_ij, hori_w_ij, w_if, w_ib):
+	def create_graph(self, w_if, w_ib):
 		g = seg.Graph()
 
 		g.add_node(0)	# Source
 		g.add_node(1)	# Target
-		for i, sp in enumerate(self.superpixels):
-			g.add_node(i)	# Superpixel
+		for sp in self.superpixels:
+			g.add_node(sp.sid + 1)	# Superpixel
 
-		for i1, sp1 in enumerate(self.superpixels):
-			for nei, ws in sp1.neighbours.items():
+		for sp1 in self.superpixels:
+			i1 = sp1.sid
+			for nei, ws in sp1.captured_neighbours.items():
 				i2 = self.divided_img[nei]
 				if i1 >= i2:
 					continue
-				g.add_edge(i1, i2, sum(ws)) # NOT WS !!!
+				g.add_edge(i1 + 1, i2 + 1, sum(ws))
 
+		merge_source = set()
+		merge_target = set()
+		for x in range(self.w):
+			for y in range(self.h):
+				i = self.divided_img[x + 1, y + 1]
+				g.add_edge(i + 1, 0, w_if[x, y])
+				g.add_edge(i + 1, 1, w_ib[x, y])
+				if w_if[x, y] > 50:
+					merge_source.add(i + 1)
+					self.colors[i - 1] = np.array([0, 0, 255])
+				elif w_ib[x, y] > 50:
+					merge_target.add(i + 1)
+					self.colors[i - 1] = np.array([255, 0, 0])
 
+		for node in merge_source:
+			g.contract_edge(0, node)
 
+		for node in merge_target:
+			g.contract_edge(1, node)
+
+		print("Superpixels:", len(self.superpixels))
+		print("Nodes:", len(g))
+		print("Pixel-nodes:", len(g.available_nodes))
+		print("Edges:", sum(len(edges) for n, edges in g.nodes.items()) / 2)
+
+		return g
+
+	def get_labeled_image(self, labels):
+		for src_lbl in labels[0]:
+			if src_lbl >= 2:
+				self.colors[src_lbl - 2] = np.array([0, 0, 255])
+
+		for tar_lbl in labels[1]:
+			if tar_lbl >= 2:
+				self.colors[tar_lbl - 2] = np.array([255, 0, 0])
+
+		new_img = np.zeros_like(self.source_img)
+		for x in range(self.w):
+			for y in range(self.h):
+				index = self.divided_img[x + 1, y + 1] - 1
+				if index > -1:
+					new_img[x, y, :] = self.colors[self.divided_img[x + 1, y + 1] - 1]
+		return new_img
 
 	def plot(self, pause=False):
 		new_img = np.zeros_like(self.source_img)
@@ -167,6 +215,10 @@ class SuperPixeliser:
 				index = self.divided_img[x + 1, y + 1] - 1
 				if index > -1:
 					new_img[x, y, :] = self.colors[self.divided_img[x + 1, y + 1] - 1]
+
+		for sp in self.superpixels:
+			for nei in sp.captured_neighbours.keys():
+				new_img[nei[0] - 1, nei[1] - 1] = (0, 0, 0)
 
 
 		# im_plot = np.mean(np.array([self.weights_hori[:, :-1], self.weights_vert[:-1, :]]), axis=0)[:, :, np.newaxis].repeat(3, axis=2) * 255
@@ -180,13 +232,13 @@ class SuperPixeliser:
 		else:
 			plt.show()
 
-	def get_weight(self, x1, y1, x2, y2):
+	def get_weights(self, x1, y1, x2, y2):
 		if x1 == x2:
 			y = min(y1, y2)
-			return self.weights_vert[x1 - 1, y - 1]
+			return self.weights_vert_hard[x1 - 1, y - 1], self.weights_vert[x1 - 1, y - 1]
 		else:
 			x = min(x1, x2)
-			return self.weights_hori[x - 1, y1 - 1]
+			return self.weights_hori_hard[x - 1, y1 - 1], self.weights_hori[x - 1, y1 - 1]
 
 
 

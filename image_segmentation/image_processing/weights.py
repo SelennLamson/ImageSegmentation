@@ -74,7 +74,7 @@ class Weights:
         # plt.plot(gaussian_b, color="#ff0000")
         plt.show()
 
-        return mu, Sigma
+        return scribbles, mu, Sigma
 
     def non_terminal_weights(self, matrix):
         """
@@ -134,14 +134,14 @@ class Weights:
         """
         # Create YUV arrays
         # Rename arrays to their according color mask
-        img_rgb = cv2.bilateralFilter(img_rgb, 15, 20, 20)
+        # img_rgb = cv2.bilateralFilter(img_rgb, 15, 20, 20)
         # plt.imshow(img_rgb.swapaxes(0, 1))
         # plt.show()
 
         # img_yuv = cv2.cvtColor(img_rgb, cv2.COLOR_RGB2YUV)
         img_yuv = img_rgb
 
-        mu, Sigma = self.get_probab_param(img_yuv, scribl_rgb)
+        scribbles, mu, Sigma = self.get_probab_param(img_yuv, scribl_rgb)
 
         # Compute non-terminal edge weights
         # Initialize zeros vectors to deal with edges
@@ -159,6 +159,20 @@ class Weights:
         self.w_if = -self.terminal_lambda * np.log10(pb / pbf)
         self.w_ib = -self.terminal_lambda * np.log10(pf / pbf)
 
+        # self.w_if = pf / pbf
+        # self.w_ib = pb / pbf
+
+        plt.imshow(self.w_if.swapaxes(0, 1), cmap='gray')
+        plt.show()
+        plt.imshow(self.w_ib.swapaxes(0, 1), cmap='gray')
+        plt.show()
+
+        foreground_scribbles = np.all(scribl_rgb[scribbles[:, 0], scribbles[:, 1]] == FOREGROUND, axis=1)
+        background_scribbles = np.all(scribl_rgb[scribbles[:, 0], scribbles[:, 1]] == BACKGROUND, axis=1)
+        self.w_if[scribbles[:, 0], scribbles[:, 1]] = foreground_scribbles * 100 + (1 - foreground_scribbles) * self.w_if[scribbles[:, 0], scribbles[:, 1]]
+        self.w_ib[scribbles[:, 0], scribbles[:, 1]] = background_scribbles * 100 + (1 - background_scribbles) * self.w_ib[scribbles[:, 0], scribbles[:, 1]]
+
+
         # heatmap = np.zeros_like(vert_w_ij)
         # heatmap[:, :, 2] = w_if * 255
         # heatmap[:, :, 0] = w_ib * 255
@@ -167,10 +181,6 @@ class Weights:
         self.hori_w_hard = (1 - np.max(np.array([canny[1:, :], canny[:-1, :]]), axis=0)/255) * 0.9 + 0.1
         self.vert_w_hard = (1 - np.max(np.array([canny[:, 1:], canny[:, :-1]]), axis=0)/255) * 0.9 + 0.1
 
-        # plt.imshow(self.hori_w_ij.swapaxes(0, 1), cmap='gray', vmin=0, vmax=1)
-        # plt.show()
-        # plt.imshow(self.vert_w_ij.swapaxes(0, 1), cmap='gray', vmin=0, vmax=1)
-        # plt.show()
 
 
 

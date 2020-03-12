@@ -113,7 +113,7 @@ class Gui:
 						rgb_scribbles = pygame.surfarray.pixels3d(self.scribbles)
 						alpha_scribbles = pygame.surfarray.pixels_alpha(self.scribbles)
 						rgb_scribbles[:, :, :] = np_scribbles
-						alpha_scribbles[:, :] = (np.sum(np_scribbles, axis=2) > 0) * 255
+						alpha_scribbles[:, :] = (np.sum(np_scribbles, axis=2) > 0) * 128
 						del rgb_scribbles
 						del alpha_scribbles
 

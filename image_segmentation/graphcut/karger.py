@@ -27,6 +27,8 @@ class Graph:
 	def copy(self):
 		new_graph = Graph()
 		new_graph.nodes = deepcopy(self.nodes)
+		new_graph.groups = deepcopy(self.groups)
+		new_graph.available_nodes = deepcopy(self.available_nodes)
 		return new_graph
 
 	def add_node(self, node):
@@ -69,6 +71,25 @@ class Graph:
 				ldst[n1] += w
 				l1[dst] += w
 
+	def perform_random_cut(self):
+		h = self.copy()
+		while len(h) > 2:
+			h.contract_edge(*h.get_random_edge())
+		return h
+
+	def perform_karger(self, n_iter):
+		best_cut = None
+		best_labels = None
+		for it in range(n_iter):
+			h = self.perform_random_cut()
+			cut = h.nodes[0][1]
+			if best_cut is None or cut < best_cut:
+				best_cut = cut
+				best_labels = (h.groups[0], h.groups[1])
+			print("\rKarger: {:.2f}%, best-cut: {}".format(100 * it / n_iter, best_cut), end="")
+		print("")
+		return best_cut, best_labels
+
 	def random_grid_graph(self, side):
 		# Create graph, as we would like
 		G = nx.grid_2d_graph(side, side)
@@ -95,36 +116,39 @@ class Graph:
 
 
 
+if __name__ == 'main':
 
-n = 10
-lengths = np.zeros(n)
+	n = 10
+	lengths = np.zeros(n)
 
-avg_time = None
+	avg_time = None
 
-for i in range(n):
-	g = Graph()
-	# g.load_graph('kargerMinCut.txt')
-	g.random_grid_graph(100)
-	while len(g) > 2:
-		now = time.time()
-		re = g.get_random_edge()
+	for i in range(n):
+		g = Graph()
+		# g.load_graph('kargerMinCut.txt')
+		g.random_grid_graph(100)
 
-		g.contract_edge(*re)
-		elapsed = time.time() - now
+		start_length = len(self)
+		while len(g) > 2:
+			now = time.time()
+			re = g.get_random_edge()
 
-		if elapsed is not None:
-			if avg_time is None:
-				avg_time = elapsed
-			else:
-				avg_time = 0.01 * elapsed + 0.99 * avg_time
+			g.contract_edge(*re)
+			elapsed = time.time() - now
 
-		print("\r", len(g), '{:.3f}us'.format(avg_time * 1000000), end="")
+			if elapsed is not None:
+				if avg_time is None:
+					avg_time = elapsed
+				else:
+					avg_time = 0.01 * elapsed + 0.99 * avg_time
 
-	print("\n")
-	print(len(g.groups[0]))
-	print(len(g.groups[1]))
-	# lengths[i] = min([1 if not isinstance(node, Node) else len(node.subnodes) for node in g.nodes])
-	# lengths[i] = min([1 if not isinstance(node, Node) else len(node.subnodes) for node in g.nodes])
+			print("\r", len(g), '{:.3f}us'.format(avg_time * 1000000), end="")
 
-plt.hist(lengths)
-plt.show()
+		print("\n")
+		print(len(g.groups[0]))
+		print(len(g.groups[1]))
+		# lengths[i] = min([1 if not isinstance(node, Node) else len(node.subnodes) for node in g.nodes])
+		# lengths[i] = min([1 if not isinstance(node, Node) else len(node.subnodes) for node in g.nodes])
+
+	plt.hist(lengths)
+	plt.show()
