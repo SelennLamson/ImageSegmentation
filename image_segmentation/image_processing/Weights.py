@@ -9,6 +9,7 @@ import time
 class Weights:
     def __init__(self):
         self.non_terminal_sigma = 1
+        self.lam = 10
 
     def find_scribbles(self, sriblled_img):
         """
@@ -76,16 +77,22 @@ class Weights:
         :param image_group: F for foreground and B for background
         :return: the probability of being the color of the pixel value while being of forground or background
         """
-        value = np.mean(val)
+        two_pi_k = (2 * np.pi) ** 3
+        # value = np.linalg.norm(val)
         if image_group == 'F':
-            mean = np.mean(mu[(0, 0, 255)])
-            sigma = np.mean(np.mean(sig[(0, 0, 255)].diagonal()))
-            return (1 / (np.sqrt(2 * np.pi * (sigma ** 2)))) * np.exp(-(value - mean) ** 2 / (2 * (sigma ** 2)))
+            mean = mu[(0, 0, 255)].astype(np.int64)
+            sigma = sig[(0, 0, 255)].astype(np.int64)
+
+            return np.exp(-0.5 * np.dot(np.dot((val - mean), np.linalg.inv(sigma)), (val - mean))) / np.sqrt(
+                two_pi_k * np.linalg.det(sigma))
 
         elif image_group == 'B':
-            mean = np.mean(mu[(255, 0, 0)])
-            sigma = np.mean(np.mean(sig[(255, 0, 0)].diagonal()))
-            return (1 / (np.sqrt(2 * np.pi * (sigma ** 2)))) * np.exp(-(value - mean) ** 2 / (2 * (sigma ** 2)))
+
+            mean = mu[(255, 0, 0)].astype(np.int64)
+            sigma = sig[(255, 0, 0)].astype(np.int64)
+
+            return np.exp(-0.5 * np.dot(np.dot((val - mean), np.linalg.inv(sigma)), (val - mean))) / np.sqrt(
+                two_pi_k * np.linalg.det(sigma))
 
     def terminal_class_proba(self, value, mu, sig, image_group):
         """
@@ -124,47 +131,41 @@ class Weights:
         # Initialize zeros vectors to deal with edges
 
         height, width, color = img_rgb.shape
-        h = np.zeros((height, 1, color))
-        w = np.zeros((1, width, color))
 
-        # Initialize the matrices to compute the weights of top, bottom, left and right neighbours
-        img_top = np.delete(np.vstack((w, img_rgb)), height, 0)
-        img_bot = np.delete(np.vstack((img_rgb, w)), 0, 0)
-        img_rgt = np.delete(np.hstack((img_rgb, h)), 0, 1)
-        img_lft = np.delete(np.hstack((h, img_rgb)), width, 1)
+        bot_n_top_norm = np.linalg.norm(img_rgb[1:, :] - img_rgb[:-1, :], axis=2)
+        left_n_right_norm = np.linalg.norm(img_rgb[:, 1:] - img_rgb[:, :-1], axis=2)
 
-        # Compute the norm of neighbours pixels
-        top_norm = np.linalg.norm((img_rgb - img_top), axis=2)
-        bot_norm = np.linalg.norm((img_rgb - img_bot), axis=2)
-        rgt_norm = np.linalg.norm((img_rgb - img_rgt), axis=2)
-        lft_norm = np.linalg.norm((img_rgb - img_lft), axis=2)
-
-        # Get the weights
-        topw_ij = self.non_terminal_weights(top_norm, non_terminal_sigma=1)
-        botw_ij = self.non_terminal_weights(bot_norm, non_terminal_sigma=1)
-        rightw_ij = self.non_terminal_weights(rgt_norm, non_terminal_sigma=1)
-        leftw_ij = self.non_terminal_weights(lft_norm, non_terminal_sigma=1)
+        bot_n_topw_ij = self.non_terminal_weights(bot_n_top_norm, non_terminal_sigma=1)
+        left_n_rightw_ij = self.non_terminal_weights(left_n_right_norm, non_terminal_sigma=1)
 
         # Compute terminal edges weights
-        lam = 10
         W_iF = np.zeros((height, width))
         W_iB = np.zeros((height, width))
         for x in tqdm(range(height)):
             for y in range(width):
-                W_iF[x, y] = -lam * np.log10(self.terminal_class_proba(img_yuv[x, y], mu, Sigma, 'F'))
-                W_iB[x, y] = -lam * np.log10(self.terminal_class_proba(img_yuv[x, y], mu, Sigma, 'B'))
+                W_iF[x, y] = -self.lam * np.log10(self.terminal_class_proba(img_yuv[x, y], mu, Sigma, 'F'))
+                W_iB[x, y] = -self.lam * np.log10(self.terminal_class_proba(img_yuv[x, y], mu, Sigma, 'B'))
         # W_iF = -lam * np.log10(terminal_class_proba(img_yuv, mu, Sigma, 'F'))
         # W_iB = -lam * np.log10(terminal_class_proba(img_yuv, mu, Sigma, 'B'))
 
-        print(mu)
-        print('---' * 10)
-        print(Sigma)
-        print('---' * 10)
-        print(W_iF)
-        print('---' * 10)
-        print(W_iB)
-        print('---' * 10)
-        print(W_iF.shape)
-        print('---' * 10)
-        print(W_iB.shape)
+        # print(mu)
+        # print('---' * 10)
+        # print(Sigma)
+        # print('---' * 10)
+        # print(W_iF)
+        # print('---' * 10)
+        # print(W_iB)
+        # print('---' * 10)
+        # print(W_iF.shape)
+        # print('---' * 10)
+        # print(W_iB.shape)
+        # print('---' * 10)
+        # print(bot_n_topw_ij.shape)
+        # print('---' * 10)
+        # print(left_n_rightw_ij.shape)
+        # print('---' * 10)
+        # print(bot_n_topw_ij)
+        # print('---' * 10)
+        # print(left_n_rightw_ij)
+
         return scrib
