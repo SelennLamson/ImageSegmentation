@@ -4,9 +4,11 @@ import cv2
 from collections import defaultdict
 from tqdm import tqdm
 import time
+import matplotlib.pyplot as plt
+import decimal
 
 
-def find_scribbles(sriblled_img):
+def find_scribbles(sriblled_img, Verbose=False):
     """
     :param sriblled_img: numpy array of shape (w, h, 3) with black everywhere and blue/red where scribbles
     :return: a numpy array with the location of the scribbled pixels
@@ -18,6 +20,9 @@ def find_scribbles(sriblled_img):
     x_r = np.where((sriblled_img[:, :, 0] == 255) & (sriblled_img[:, :, 1] == 0) & (sriblled_img[:, :, 2] == 0))[0]
     y_r = np.where((sriblled_img[:, :, 0] == 255) & (sriblled_img[:, :, 1] == 0) & (sriblled_img[:, :, 2] == 0))[1]
     r_scribbles = np.dstack((x_r, y_r))[0]
+
+    if Verbose:
+        return b_scribbles, r_scribbles
 
     return np.vstack((b_scribbles, r_scribbles))
 
@@ -55,39 +60,79 @@ def get_probab_param(img_yuv, scribl_rgb, scribl_yuv):
     return mu, Sigma
 
 
-def non_terminal_weights(matrix, sigma=1):
+def non_terminal_weights(matrix, non_terminal_sigma=1):
     """
 
-    :param sigma:
+    :param non_terminal_sigma:
     :param matrix: matrix to apply the function
     :return: the weight of the edge between two pixels.
     weight is large if pixels are similar and low if not
     """
-    return np.exp((-1 / (2 * sigma ** 2)) * matrix)
+    return np.exp((-1 / (2 * non_terminal_sigma ** 2)) * matrix)
 
 
-def terminal_color_proba(val, mu, sig, classe):
-    value = np.mean(val)
-    if classe == 'F':
-        mean = np.mean(mu[(0, 0, 255)])
-        sigma = np.mean(np.mean(sig[(0, 0, 255)].diagonal()))
-        return (1 / (np.sqrt(2 * np.pi * (sigma ** 2)))) * np.exp(-(value - mean) ** 2 / (2 * (sigma ** 2)))
+def terminal_color_proba(val, mu, sig, image_group):
+    """
 
-    elif classe == 'B':
-        mean = np.mean(mu[(255, 0, 0)])
-        sigma = np.mean(np.mean(sig[(255, 0, 0)].diagonal()))
-        return (1 / (np.sqrt(2 * np.pi * (sigma ** 2)))) * np.exp(-(value - mean) ** 2 / (2 * (sigma ** 2)))
+    :param val: pixel (y, u, v)
+    :param mu: dictionnary containing the mean value of pixels y u v
+    :param sig: dictionnary containing the covariance matrix
+    :param image_group: F for foreground and B for background
+    :return: the probability of being the color of the pixel value while being of forground or background
+    """
+    two_pi_k = (2 * np.pi) ** 3
+    value = np.linalg.norm(val)
+    if image_group == 'F':
+        mean = mu[(0, 0, 255)].astype(np.int64)
+        sigma = sig[(0, 0, 255)].astype(np.int64)
+        # print(np.exp(-0.5 * (val - mean) * np.linalg.inv(sigma) * (val - mean)))
+        # print(np.sqrt(two_pi_k * np.linalg.det(sigma)))
+
+        return np.exp(-0.5 * np.dot(np.dot((val - mean), np.linalg.inv(sigma)), (val - mean))) / np.sqrt(
+            two_pi_k * np.linalg.det(sigma))
+
+    elif image_group == 'B':
+
+        mean = mu[(255, 0, 0)].astype(np.int64)
+        sigma = sig[(255, 0, 0)].astype(np.int64)
+        # print(np.exp(-0.5 * (val - mean) * np.linalg.inv(sigma) * (val - mean)))
+        # print(np.sqrt(two_pi_k * np.linalg.det(sigma)))
+
+        return np.exp(-0.5 * np.dot(np.dot((val - mean), np.linalg.inv(sigma)), (val - mean))) / np.sqrt(
+            two_pi_k * np.linalg.det(sigma))
 
 
-def terminal_class_proba(value, mu, sig, classe):
+def terminal_class_proba(value, mu, sig, image_group):
+    """
+
+    :param value: pixel (y, u, v)
+    :param mu: dictionnary containing the mean value of pixels y u v
+    :param sig: dictionnary containing the covariance matrix
+    :param image_group: F for foreground and B for background
+    :return: return the Pdf of Foreground, or Background
+    """
     P_f = terminal_color_proba(value, mu, sig, 'F')
     P_b = terminal_color_proba(value, mu, sig, 'B')
 
-    if classe == 'F':
+    if image_group == 'F':
         return P_f / (P_f + P_b)
 
-    elif classe == 'B':
+    elif image_group == 'B':
         return P_b / (P_f + P_b)
+
+
+def get_Pdfs(value, mu, sig):
+    """
+
+    :param value: pixel (y, u, v)
+    :param mu: dictionnary containing the mean value of pixels y u v
+    :param sig: dictionnary containing the covariance matrix
+    :return: return the Pdf of Foreground, or Background
+    """
+    P_f = terminal_color_proba(value, mu, sig, 'F')
+    P_b = terminal_color_proba(value, mu, sig, 'B')
+
+    return P_f, P_b
 
 
 def seg_func_dummy(img, scrib):
@@ -124,11 +169,17 @@ def seg_func_dummy(img, scrib):
     rgt_norm = np.linalg.norm((img_rgb - img_rgt), axis=2)
     lft_norm = np.linalg.norm((img_rgb - img_lft), axis=2)
 
+    bot_n_top_norm = np.linalg.norm(img_rgb[1:, :] - img_rgb[:-1, :], axis=2)
+    left_n_right_norm = np.linalg.norm(img_rgb[:, 1:] - img_rgb[:, :-1], axis=2)
+
+    bot_n_topw_ij = non_terminal_weights(bot_n_top_norm, non_terminal_sigma=1)
+    left_n_rightw_ij = non_terminal_weights(left_n_right_norm, non_terminal_sigma=1)
+
     # Get the weights
-    topw_ij = non_terminal_weights(top_norm, sigma=1)
-    botw_ij = non_terminal_weights(bot_norm, sigma=1)
-    rightw_ij = non_terminal_weights(rgt_norm, sigma=1)
-    leftw_ij = non_terminal_weights(lft_norm, sigma=1)
+    topw_ij = non_terminal_weights(top_norm, non_terminal_sigma=1)
+    botw_ij = non_terminal_weights(bot_norm, non_terminal_sigma=1)
+    rightw_ij = non_terminal_weights(rgt_norm, non_terminal_sigma=1)
+    leftw_ij = non_terminal_weights(lft_norm, non_terminal_sigma=1)
 
     # Compute terminal edges weights
     lam = 10
@@ -138,20 +189,37 @@ def seg_func_dummy(img, scrib):
         for y in range(width):
             W_iF[x, y] = -lam * np.log10(terminal_class_proba(img_yuv[x, y], mu, Sigma, 'F'))
             W_iB[x, y] = -lam * np.log10(terminal_class_proba(img_yuv[x, y], mu, Sigma, 'B'))
-    #W_iF = -lam * np.log10(terminal_class_proba(img_yuv, mu, Sigma, 'F'))
-    #W_iB = -lam * np.log10(terminal_class_proba(img_yuv, mu, Sigma, 'B'))
+    # W_iF = -lam * np.log10(terminal_class_proba(img_yuv, mu, Sigma, 'F'))
+    # W_iB = -lam * np.log10(terminal_class_proba(img_yuv, mu, Sigma,'B'))
 
-    print(mu)
-    print('---' * 10)
-    print(Sigma)
-    print('---'*10)
-    print(W_iF)
-    print('---'*10)
-    print(W_iB)
-    print('---' * 10)
-    print(W_iF.shape)
-    print('---' * 10)
-    print(W_iB.shape)
+    #PdfF, PdfB = get_Pdfs(img_yuv, mu, Sigma)
+    #blue_coord, red_coord = find_scribbles(scrib, True)
+
+    #print(mu)
+    #print('---' * 10)
+    #print(Sigma)
+    #print('---' * 10)
+    #print(W_iF)
+    #print('---' * 10)
+    #print(W_iB)
+    #print('---' * 10)
+    #print(W_iF.shape)
+    #print('---' * 10)
+    #print(W_iB.shape)
+    #print('---' * 10)
+    #print(bot_n_topw_ij.shape)
+    #print('---' * 10)
+    #print(left_n_rightw_ij.shape)
+    #print('---' * 10)
+    #print(bot_n_topw_ij)
+    #print('---' * 10)
+    #print(left_n_rightw_ij)
+
+
+    #plt.plot(PdfF)
+    #plt.plot(PdfB)
+    #plt.show()
+
     return scrib
 
 
