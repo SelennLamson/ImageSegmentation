@@ -106,11 +106,8 @@ class Weights:
         """
         two_pi_k = (2 * np.pi) ** 3
         mean = mu[group]
-        print('mu', mu)
         sigma = Sigma[group]
-        print('mu', sigma)
         diff = img_yuv - mean[np.newaxis, np.newaxis, :]
-        print('diff', diff.shape)
         res = np.matmul(diff, np.linalg.inv(sigma)[np.newaxis, np.newaxis, :])[0]
         res = np.sum(res * diff, axis=2)
         return np.exp(-0.5 * res) / np.sqrt(two_pi_k * np.linalg.det(sigma))
@@ -124,8 +121,6 @@ class Weights:
         # Create YUV arrays
         # Rename arrays to their according color mask
         img_rgb = cv2.bilateralFilter(img_rgb, 15, 20, 20)
-        # plt.imshow(img_rgb.swapaxes(0, 1))
-        # plt.show()
 
         # img_yuv = cv2.cvtColor(img_rgb, cv2.COLOR_RGB2YUV)
         img_yuv = img_rgb
@@ -136,7 +131,6 @@ class Weights:
         # Initialize zeros vectors to deal with edges
         vert_norm = np.linalg.norm(img_yuv[:, 1:] - img_yuv[:, :-1], axis=2)
         hori_norm = np.linalg.norm(img_yuv[1:, :] - img_yuv[:-1, :], axis=2)
-
         self.vert_w_ij = self.non_terminal_weights(vert_norm)
         self.hori_w_ij = self.non_terminal_weights(hori_norm)
 
@@ -155,7 +149,7 @@ class Weights:
         plt.imshow(self.w_ib.swapaxes(0, 1), cmap='gray')
         plt.show()
 
-        #
+        # Change the terminal weights of scribbled pixel to 0 or infinity
         infinity = 10000
         foreground_scribbles = np.all(scribl_rgb[scribbles[:, 0], scribbles[:, 1]] == FOREGROUND, axis=1)
         background_scribbles = np.all(scribl_rgb[scribbles[:, 0], scribbles[:, 1]] == BACKGROUND, axis=1)
@@ -171,14 +165,18 @@ class Weights:
         # heatmap[:, :, 0] = w_ib * 255
 
         # Add a canny edge detector
-        # canny = cv2.Canny(img_yuv, 10, 10)
-        # self.hori_w_hard = (1 - np.max(np.array([canny[1:, :], canny[:-1, :]]), axis=0)/255) * 0.9 + 0.1
-        # self.vert_w_hard = (1 - np.max(np.array([canny[:, 1:], canny[:, :-1]]), axis=0)/255) * 0.9 + 0.1
+        canny = cv2.Canny(img_yuv, 10, 10)
+        self.hori_w_hard = (1 - np.max(np.array([canny[1:, :], canny[:-1, :]]), axis=0)/255) * 0.9 + 0.1
+        self.vert_w_hard = (1 - np.max(np.array([canny[:, 1:], canny[:, :-1]]), axis=0)/255) * 0.9 + 0.1
 
         # return scribl_rgb
 
 
     def build_maxflow_graph(self):
+        """
+        @:return: graph representation for the image, to apply mincut/maxflow algo
+        """
+        # Number of edges to draw (no target and source nodes yet)
         w = self.w_if.shape[0]
         h = self.w_if.shape[1]
         n_nodes = w * h
@@ -187,15 +185,18 @@ class Weights:
 
         nodes = g.add_nodes(n_nodes)
 
+        # Create nodes and join (grid representation)
         for x in range(w):
             for y in range(h):
                 node_id = x * h + y
                 g.add_tedge(nodes[node_id], self.w_if[x, y], self.w_ib[x, y])
 
+                # Add horizontal edges
                 if x < w - 1:
                     neib_id = (x + 1) * h + y
                     g.add_edge(nodes[node_id], nodes[neib_id], self.hori_w_ij[x, y], self.hori_w_ij[x, y])
 
+                # Add vertical edges
                 if y < h - 1:
                     neib_id = x * h + y + 1
                     g.add_edge(nodes[node_id], nodes[neib_id], self.vert_w_ij[x, y], self.vert_w_ij[x, y])
@@ -204,6 +205,12 @@ class Weights:
 
 
     def build_image_from_maxflow_labels(self, g, nodes):
+        """
+        :param g: graph
+        :param nodes: set of nodes
+        :return: final image with predicted location of background and foreground
+        """
+        # Number of edges to draw
         w = self.w_if.shape[0]
         h = self.w_if.shape[1]
         new_img = np.zeros((w, h, 3), dtype=np.uint8)

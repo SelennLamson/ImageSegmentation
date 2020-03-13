@@ -2,8 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="bb83ed4b-194e-48ff-bfd3-ba0009cbeb6e" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/image_segmentation/image_processing/gmm_weights.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/image_segmentation/image_processing/gmm_weights.py" beforeDir="false" afterPath="$PROJECT_DIR$/image_segmentation/image_processing/gmm_weights.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/image_segmentation/image_processing/weights.py" beforeDir="false" afterPath="$PROJECT_DIR$/image_segmentation/image_processing/weights.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -27,7 +27,7 @@
         <entry file="file://$PROJECT_DIR$/image_segmentation/image_processing/weights.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="253">
-              <caret line="219" lean-forward="true" selection-start-line="219" selection-end-line="219" />
+              <caret line="226" lean-forward="true" selection-start-line="174" selection-start-column="4" selection-end-line="226" />
               <folding>
                 <element signature="e#35#53#0" expanded="true" />
               </folding>
@@ -39,10 +39,7 @@
         <entry file="file://$PROJECT_DIR$/image_segmentation/image_processing/gmm_weights.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="135">
-              <caret line="9" column="43" lean-forward="true" selection-start-line="9" selection-start-column="43" selection-end-line="9" selection-end-column="43" />
-              <folding>
-                <element signature="e#0#32#0" expanded="true" />
-              </folding>
+              <caret line="9" column="36" selection-start-line="9" selection-start-column="36" selection-end-line="9" selection-end-column="36" />
             </state>
           </provider>
         </entry>
@@ -51,7 +48,7 @@
         <entry file="file://$PROJECT_DIR$/tests_phil.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="-1458">
-              <caret line="117" column="27" lean-forward="true" selection-start-line="117" selection-start-column="27" selection-end-line="117" selection-end-column="27" />
+              <caret line="117" column="27" selection-start-line="117" selection-start-column="27" selection-end-line="117" selection-end-column="27" />
               <folding>
                 <element signature="e#0#32#0" expanded="true" />
               </folding>
@@ -97,6 +94,7 @@
       <find>terminal</find>
       <find>color</find>
       <find>scribbles</find>
+      <find>get_segment</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -179,7 +177,28 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Python.weights">
+  <component name="RunManager" selected="Python.gmm_weights">
+    <configuration name="gmm_weights" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <module name="ImageSegmentation" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/image_segmentation/image_processing" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/image_segmentation/image_processing/gmm_weights.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <configuration name="gui" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <module name="ImageSegmentation" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -224,6 +243,7 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.gmm_weights" />
         <item itemvalue="Python.weights" />
         <item itemvalue="Python.gui" />
       </list>
@@ -236,16 +256,16 @@
     <frame x="0" y="23" width="1272" height="689" extended-state="0" />
     <editor active="true" />
     <layout>
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.24940048" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.24940048" />
       <window_info id="Structure" order="1" weight="0.25" />
       <window_info anchor="bottom" id="Educational.CheckDetails" />
       <window_info anchor="bottom" id="Version Control" />
-      <window_info anchor="bottom" id="Terminal" sideWeight="0.4964029" visible="true" weight="0.3312" />
-      <window_info anchor="bottom" id="Event Log" sideWeight="0.50359714" side_tool="true" visible="true" weight="0.3312" />
-      <window_info anchor="bottom" id="Python Console" sideWeight="0.5283773" weight="0.3504" />
+      <window_info anchor="bottom" id="Terminal" sideWeight="0.4964029" weight="0.3312" />
+      <window_info anchor="bottom" id="Event Log" sideWeight="0.509992" side_tool="true" visible="true" weight="0.3296" />
+      <window_info anchor="bottom" id="Python Console" sideWeight="0.5259792" weight="0.3504" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" />
-      <window_info anchor="bottom" id="Run" order="2" sideWeight="0.49320543" weight="0.3296" />
+      <window_info active="true" anchor="bottom" id="Run" order="2" sideWeight="0.490008" visible="true" weight="0.3296" />
       <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
@@ -291,7 +311,7 @@
     <entry file="file://$PROJECT_DIR$/tests_phil.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="-1458">
-          <caret line="117" column="27" lean-forward="true" selection-start-line="117" selection-start-column="27" selection-end-line="117" selection-end-column="27" />
+          <caret line="117" column="27" selection-start-line="117" selection-start-column="27" selection-end-line="117" selection-end-column="27" />
           <folding>
             <element signature="e#0#32#0" expanded="true" />
           </folding>
@@ -301,7 +321,7 @@
     <entry file="file://$PROJECT_DIR$/image_segmentation/image_processing/weights.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="253">
-          <caret line="219" lean-forward="true" selection-start-line="219" selection-end-line="219" />
+          <caret line="226" lean-forward="true" selection-start-line="174" selection-start-column="4" selection-end-line="226" />
           <folding>
             <element signature="e#35#53#0" expanded="true" />
           </folding>
@@ -311,10 +331,7 @@
     <entry file="file://$PROJECT_DIR$/image_segmentation/image_processing/gmm_weights.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="135">
-          <caret line="9" column="43" lean-forward="true" selection-start-line="9" selection-start-column="43" selection-end-line="9" selection-end-column="43" />
-          <folding>
-            <element signature="e#0#32#0" expanded="true" />
-          </folding>
+          <caret line="9" column="36" selection-start-line="9" selection-start-column="36" selection-end-line="9" selection-end-column="36" />
         </state>
       </provider>
     </entry>
