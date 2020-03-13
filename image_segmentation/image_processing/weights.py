@@ -1,4 +1,4 @@
-import image_segmentation as seg
+# import image_segmentation as seg
 import numpy as np
 import cv2
 from collections import defaultdict
@@ -6,11 +6,17 @@ from tqdm import tqdm
 import time
 import matplotlib.pyplot as plt
 
-FOREGROUND = (0, 0, 255)
-BACKGROUND = (255, 0, 0)
+FOREGROUND = (0, 0, 255) # blue
+BACKGROUND = (255, 0, 0) # red
 
 def gaussian(x, mu, sig):
-    return np.exp(-(x - mu)**2 / (2 * sig**2))
+    """
+    :param x: data
+    :param mu: mean
+    :param sig: variancce
+    :return: gaussian distrib
+    """
+    return 1/(sig*(np.sqrt(2*np.pi))) * np.exp(-(x - mu)**2 / (2 * sig**2))
 
 class Weights:
     def __init__(self, non_terminal_sigma=1, terminal_lambda=10):
@@ -44,13 +50,16 @@ class Weights:
         [ cov(vy) cov(vu) var(v) ]
         """
 
+        # Get coordinates of scribbles
         scribbles = self.find_scribbles(scribl_rgb)
         comps = defaultdict(lambda: np.array([]).reshape(0, 3))
 
+        # Separately store background and foreground
         for (i, j) in scribbles:
             c = tuple(scribl_rgb[i, j, :])
             comps[c] = np.vstack([comps[c], img_yuv[i, j, :]])
 
+        # Compute mean pixel value and variance of the scribbles
         mu, Sigma = {}, {}
         for c in comps:
             mu[c] = np.mean(comps[c], axis=0)
@@ -61,17 +70,19 @@ class Weights:
         values_f = comps[FOREGROUND][:, channel]
         values_b = comps[BACKGROUND][:, channel]
 
+        # Create Gaussian - call function
         gaussian_f = gaussian(np.linspace(0, 255, 255), mu[FOREGROUND][channel], Sigma[FOREGROUND][channel, channel])
         gaussian_b = gaussian(np.linspace(0, 255, 255), mu[BACKGROUND][channel], Sigma[BACKGROUND][channel, channel])
 
-        # fig, axs = plt.subplots(1, 2, sharex=True)
-        # axs[0].hist(values_f, density=True, color="#0000ff88")
-        # axs[0].hist(values_b, density=True, color="#ff000088")
-        # axs[1].plot(gaussian_f, color="#0000ff")
-        # axs[1].plot(gaussian_b, color="#ff0000")
+        # Plot
+        fig, axs = plt.subplots(1, 2, sharex=True)
+        axs[0].hist(values_f, density=True, color="#0000ff88")
+        axs[0].hist(values_b, density=True, color="#ff000088")
+        axs[1].plot(gaussian_f, color="#0000ff")
+        axs[1].plot(gaussian_b, color="#ff0000")
 
-        # plt.plot(gaussian_f, color="#0000ff")
-        # plt.plot(gaussian_b, color="#ff0000")
+        plt.plot(gaussian_f, color="#0000ff")
+        plt.plot(gaussian_b, color="#ff0000")
         plt.show()
 
         return scribbles, mu, Sigma
@@ -84,32 +95,6 @@ class Weights:
         """
         return np.exp((-1 / (2 * self.non_terminal_sigma ** 2)) * matrix)
 
-    def terminal_color_proba(self, val, mu, sig, image_group):
-        """
-        :param val: pixel (y, u, v)
-        :param mu: dictionnary containing the mean value of pixels y u v
-        :param sig: dictionnary containing the covariance matrix
-        :param image_group: F for foreground and B for background
-        :return: the probability of being the color of the pixel value while being of forground or background
-        """
-        two_pi_k = (2 * np.pi) ** 3
-        # value = np.linalg.norm(val)
-        if image_group == 'F':
-            mean = mu[(0, 0, 255)]
-            sigma = sig[(0, 0, 255)]
-
-            diff = val - mean
-            return np.exp(-0.5 * diff.T @ np.linalg.inv(sigma) @ diff)\
-                   / np.sqrt(two_pi_k * np.linalg.det(sigma))
-
-        elif image_group == 'B':
-
-            mean = mu[(255, 0, 0)]
-            sigma = sig[(255, 0, 0)]
-
-            diff = val - mean
-            return np.exp(-0.5 * diff.T @ np.linalg.inv(sigma) @ diff)\
-                   / np.sqrt(two_pi_k * np.linalg.det(sigma))
 
     def terminal_class_proba(self, img_yuv, group, mu, Sigma):
         """
@@ -117,11 +102,15 @@ class Weights:
         :param group: BACKGROUND or FOREGROUND constant
         :param mu: dictionnary containing the mean value of pixels y u v
         :param Sigma: dictionnary containing the covariance matrix
+        :return: proba of terminal edges of belonging to source and target
         """
         two_pi_k = (2 * np.pi) ** 3
         mean = mu[group]
+        print('mu', mu)
         sigma = Sigma[group]
+        print('mu', sigma)
         diff = img_yuv - mean[np.newaxis, np.newaxis, :]
+        print('diff', diff.shape)
         res = np.matmul(diff, np.linalg.inv(sigma)[np.newaxis, np.newaxis, :])[0]
         res = np.sum(res * diff, axis=2)
         return np.exp(-0.5 * res) / np.sqrt(two_pi_k * np.linalg.det(sigma))
@@ -151,57 +140,40 @@ class Weights:
         self.vert_w_ij = self.non_terminal_weights(vert_norm)
         self.hori_w_ij = self.non_terminal_weights(hori_norm)
 
-        # Compute terminal edges weights
+        # Compute proba of the color given background/foreground
         pf = self.terminal_class_proba(img_yuv, FOREGROUND, mu, Sigma)
         pb = self.terminal_class_proba(img_yuv, BACKGROUND, mu, Sigma)
         pbf = pf + pb
 
+        # Compute terminal edges weights (non scribbled pixels)
         self.w_if = -self.terminal_lambda * np.log10(pb / pbf)
         self.w_ib = -self.terminal_lambda * np.log10(pf / pbf)
 
-        # self.w_if = pf / pbf
-        # self.w_ib = pb / pbf
-
+        # Plot
         plt.imshow(self.w_if.swapaxes(0, 1), cmap='gray')
         plt.show()
         plt.imshow(self.w_ib.swapaxes(0, 1), cmap='gray')
         plt.show()
 
+        #
+        infinity = 10000
         foreground_scribbles = np.all(scribl_rgb[scribbles[:, 0], scribbles[:, 1]] == FOREGROUND, axis=1)
         background_scribbles = np.all(scribl_rgb[scribbles[:, 0], scribbles[:, 1]] == BACKGROUND, axis=1)
-        self.w_if[scribbles[:, 0], scribbles[:, 1]] = foreground_scribbles * 100 + (1 - foreground_scribbles) * self.w_if[scribbles[:, 0], scribbles[:, 1]]
-        self.w_ib[scribbles[:, 0], scribbles[:, 1]] = background_scribbles * 100 + (1 - background_scribbles) * self.w_ib[scribbles[:, 0], scribbles[:, 1]]
-
+        self.w_if[scribbles[:, 0], scribbles[:, 1]] = foreground_scribbles * infinity \
+                                                      + (1 - foreground_scribbles) * self.w_if[scribbles[:, 0], scribbles[:, 1]]
+        self.w_if[scribbles[:, 0], scribbles[:, 1]] = (1 - background_scribbles) * self.w_if[scribbles[:, 0], scribbles[:, 1]]
+        self.w_ib[scribbles[:, 0], scribbles[:, 1]] = background_scribbles * infinity \
+                                                      + (1 - background_scribbles) * self.w_ib[scribbles[:, 0], scribbles[:, 1]]
+        self.w_ib[scribbles[:, 0], scribbles[:, 1]] = (1 - foreground_scribbles) * self.w_ib[scribbles[:, 0], scribbles[:, 1]]
 
         # heatmap = np.zeros_like(vert_w_ij)
         # heatmap[:, :, 2] = w_if * 255
         # heatmap[:, :, 0] = w_ib * 255
 
-        canny = cv2.Canny(img_yuv, 10, 10)
-        self.hori_w_hard = (1 - np.max(np.array([canny[1:, :], canny[:-1, :]]), axis=0)/255) * 0.9 + 0.1
-        self.vert_w_hard = (1 - np.max(np.array([canny[:, 1:], canny[:, :-1]]), axis=0)/255) * 0.9 + 0.1
-
-
-
-
-        # print(mu)
-        # print('---' * 10)
-        # print(Sigma)
-        # print('---' * 10)
-        # print(w_if)
-        # print('---' * 10)
-        # print(w_ib)
-        # print('---' * 10)
-        # print(w_if.shape)
-        # print('---' * 10)
-        # print(w_ib.shape)
-        # print('---' * 10)
-        # print(vert_w_ij.shape)
-        # print('---' * 10)
-        # print(hori_w_ij.shape)
-        # print('---' * 10)
-        # print(vert_w_ij)
-        # print('---' * 10)
-        # print(hori_w_ij)
+        # Add a canny edge detector
+        # canny = cv2.Canny(img_yuv, 10, 10)
+        # self.hori_w_hard = (1 - np.max(np.array([canny[1:, :], canny[:-1, :]]), axis=0)/255) * 0.9 + 0.1
+        # self.vert_w_hard = (1 - np.max(np.array([canny[:, 1:], canny[:, :-1]]), axis=0)/255) * 0.9 + 0.1
 
         # return scribl_rgb
+
