@@ -5,7 +5,9 @@ from collections import defaultdict
 from tqdm import tqdm
 import time
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 import maxflow
+from sklearn.mixture import GaussianMixture
 
 FOREGROUND = (0, 0, 255)
 BACKGROUND = (255, 0, 0)
@@ -13,10 +15,11 @@ BACKGROUND = (255, 0, 0)
 def gaussian(x, mu, sig):
     return np.exp(-(x - mu)**2 / (2 * sig**2))
 
-class Weights:
-    def __init__(self, non_terminal_sigma=1, terminal_lambda=10):
+class GmmWeights:
+    def __init__(self, non_terminal_sigma=1, terminal_lambda=10, mixture_components=5):
         self.non_terminal_sigma = non_terminal_sigma
         self.terminal_lambda = terminal_lambda
+        self.mixture_components = mixture_components
 
         self.w_if = None
         self.w_ib = None
@@ -37,12 +40,7 @@ class Weights:
         """
         :param img_yuv: numpy array of shape (w, h, 3) containing the YUV image
         :param scribl_rgb: numpy array of shape (w, h, 3) with black everywhere and blue/red where scribbles
-        :return: two dicts:
-        - mu_dict:  key is the scribble color, value is the mean of every pixels under the scribbles of yuv image, shape (1,3)
-        - sigma_dict:  key is the scribble color, value is a (3 x 3) symetric matrix,
-        [ var(y) cov(yu) cov(yv) ]
-        [ cov(uy) var(u) cov(uv) ]
-        [ cov(vy) cov(vu) var(v) ]
+        :return: one models dict
         """
 
         scribbles = self.find_scribbles(scribl_rgb)
@@ -52,30 +50,40 @@ class Weights:
             c = tuple(scribl_rgb[i, j, :])
             comps[c] = np.vstack([comps[c], img_yuv[i, j, :]])
 
-        mu, Sigma = {}, {}
+        gmm = {}
         for c in comps:
-            mu[c] = np.mean(comps[c], axis=0)
-            Sigma[c] = np.cov(comps[c].T)
+            gmm[c] = GaussianMixture(n_components=self.mixture_components)
+            gmm[c].fit(comps[c])
 
         # Plotting Y
-        channel = 0
-        values_f = comps[FOREGROUND][:, channel]
-        values_b = comps[BACKGROUND][:, channel]
+        # values_f1 = comps[FOREGROUND][:, 0]
+        # values_b1 = comps[BACKGROUND][:, 0]
+        # values_f2 = comps[FOREGROUND][:, 1]
+        # values_b2 = comps[BACKGROUND][:, 1]
+        # values_f3 = comps[FOREGROUND][:, 2]
+        # values_b3 = comps[BACKGROUND][:, 2]
 
-        gaussian_f = gaussian(np.linspace(0, 255, 255), mu[FOREGROUND][channel], Sigma[FOREGROUND][channel, channel])
-        gaussian_b = gaussian(np.linspace(0, 255, 255), mu[BACKGROUND][channel], Sigma[BACKGROUND][channel, channel])
+        # gaussian_f = gaussian(np.linspace(0, 255, 255), mu[FOREGROUND][channel], Sigma[FOREGROUND][channel, channel])
+        # gaussian_b = gaussian(np.linspace(0, 255, 255), mu[BACKGROUND][channel], Sigma[BACKGROUND][channel, channel])
 
-        # fig, axs = plt.subplots(1, 2, sharex=True)
-        # axs[0].hist(values_f, density=True, color="#0000ff88")
-        # axs[0].hist(values_b, density=True, color="#ff000088")
-        # axs[1].plot(gaussian_f, color="#0000ff")
-        # axs[1].plot(gaussian_b, color="#ff0000")
+        # fig = plt.figure(figsize=(8, 8))
+        # # ax = fig.gca(projection='3d')
+        # plt.scatter(values_f1, values_f3, color='blue')
+        # plt.scatter(values_b1, values_b3, color='red')
+        #
+        # X, Y, Z = np.meshgrid(np.linspace(0, 255, 100), np.linspace(0, 255, 100), np.linspace(0, 255, 100))
+        # XX = np.array([X.ravel(), Y.ravel(), Z.ravel()]).T
+        # S0 = gmm[list(gmm.keys())[0]].score_samples(XX)
+        # S0 = np.mean(S0.reshape((100, 100, 100)), axis=1).reshape(100, 100)
+        # S1 = gmm[list(gmm.keys())[1]].score_samples(XX)
+        # S1 = np.mean(S1.reshape((100, 100, 100)), axis=1).reshape(100, 100)
+        #
+        # plt.contour(X[:, 0, :], Z[:, 0, :], S0, np.linspace(S0.min(), S0.max(), 20))
+        # plt.contour(X[:, 0, :], Z[:, 0, :], S1, np.linspace(S1.min(), S1.max(), 20))
+        #
+        # plt.show()
 
-        # plt.plot(gaussian_f, color="#0000ff")
-        # plt.plot(gaussian_b, color="#ff0000")
-        plt.show()
-
-        return scribbles, mu, Sigma
+        return scribbles, gmm
 
     def non_terminal_weights(self, matrix):
         """
@@ -85,47 +93,15 @@ class Weights:
         """
         return np.exp((-1 / (2 * self.non_terminal_sigma ** 2)) * matrix)
 
-    def terminal_color_proba(self, val, mu, sig, image_group):
-        """
-        :param val: pixel (y, u, v)
-        :param mu: dictionnary containing the mean value of pixels y u v
-        :param sig: dictionnary containing the covariance matrix
-        :param image_group: F for foreground and B for background
-        :return: the probability of being the color of the pixel value while being of forground or background
-        """
-        two_pi_k = (2 * np.pi) ** 3
-        # value = np.linalg.norm(val)
-        if image_group == 'F':
-            mean = mu[(0, 0, 255)]
-            sigma = sig[(0, 0, 255)]
-
-            diff = val - mean
-            return np.exp(-0.5 * diff.T @ np.linalg.inv(sigma) @ diff)\
-                   / np.sqrt(two_pi_k * np.linalg.det(sigma))
-
-        elif image_group == 'B':
-
-            mean = mu[(255, 0, 0)]
-            sigma = sig[(255, 0, 0)]
-
-            diff = val - mean
-            return np.exp(-0.5 * diff.T @ np.linalg.inv(sigma) @ diff)\
-                   / np.sqrt(two_pi_k * np.linalg.det(sigma))
-
-    def terminal_class_proba(self, img_yuv, group, mu, Sigma):
+    def terminal_class_proba(self, img_yuv, group, gmm):
         """
         :param img_yuv: image values (YUV format)
         :param group: BACKGROUND or FOREGROUND constant
         :param mu: dictionnary containing the mean value of pixels y u v
         :param Sigma: dictionnary containing the covariance matrix
         """
-        two_pi_k = (2 * np.pi) ** 3
-        mean = mu[group]
-        sigma = Sigma[group]
-        diff = img_yuv - mean[np.newaxis, np.newaxis, :]
-        res = np.matmul(diff, np.linalg.inv(sigma)[np.newaxis, np.newaxis, :])[0]
-        res = np.sum(res * diff, axis=2)
-        return np.exp(-0.5 * res) / np.sqrt(two_pi_k * np.linalg.det(sigma))
+        model = gmm[group]
+        return model.score_samples(img_yuv.reshape(img_yuv.shape[0] * img_yuv.shape[1], 3)).reshape(img_yuv.shape[0], img_yuv.shape[1])
 
     def compute_weights(self, img_rgb, scribl_rgb):
         """
@@ -142,7 +118,7 @@ class Weights:
         img_yuv = cv2.cvtColor(img_rgb, cv2.COLOR_RGB2YUV)
         # img_yuv = img_rgb
 
-        scribbles, mu, Sigma = self.get_probab_param(img_yuv, scribl_rgb)
+        scribbles, gmm = self.get_probab_param(img_yuv, scribl_rgb)
 
         # Compute non-terminal edge weights
         # Initialize zeros vectors to deal with edges
@@ -153,59 +129,26 @@ class Weights:
         self.hori_w_ij = self.non_terminal_weights(hori_norm)
 
         # Compute terminal edges weights
-        pf = self.terminal_class_proba(img_yuv, FOREGROUND, mu, Sigma)
-        pb = self.terminal_class_proba(img_yuv, BACKGROUND, mu, Sigma)
+        pf = self.terminal_class_proba(img_yuv, FOREGROUND, gmm)
+        pb = self.terminal_class_proba(img_yuv, BACKGROUND, gmm)
         pbf = pf + pb
 
-        self.w_if = -self.terminal_lambda * np.log10(pb / pbf)
-        self.w_ib = -self.terminal_lambda * np.log10(pf / pbf)
-
-        # self.w_if = pf / pbf
-        # self.w_ib = pb / pbf
-
-        # plt.imshow(self.w_if.swapaxes(0, 1), cmap='gray')
-        # plt.show()
-        # plt.imshow(self.w_ib.swapaxes(0, 1), cmap='gray')
-        # plt.show()
+        self.w_if = - self.terminal_lambda * np.log10(pf / pbf)
+        self.w_ib = - self.terminal_lambda * np.log10(pb / pbf)
 
         foreground_scribbles = np.all(scribl_rgb[scribbles[:, 0], scribbles[:, 1]] == FOREGROUND, axis=1)
         background_scribbles = np.all(scribl_rgb[scribbles[:, 0], scribbles[:, 1]] == BACKGROUND, axis=1)
-        self.w_if[scribbles[:, 0], scribbles[:, 1]] = foreground_scribbles * 1000 + (1 - foreground_scribbles) * self.w_if[scribbles[:, 0], scribbles[:, 1]]
-        self.w_ib[scribbles[:, 0], scribbles[:, 1]] = background_scribbles * 1000 + (1 - background_scribbles) * self.w_ib[scribbles[:, 0], scribbles[:, 1]]
-
-
-        # heatmap = np.zeros_like(vert_w_ij)
-        # heatmap[:, :, 2] = w_if * 255
-        # heatmap[:, :, 0] = w_ib * 255
+        self.w_if[scribbles[:, 0], scribbles[:, 1]] = foreground_scribbles * 10000 + (1 - foreground_scribbles) * self.w_if[scribbles[:, 0], scribbles[:, 1]]
+        self.w_ib[scribbles[:, 0], scribbles[:, 1]] = background_scribbles * 10000 + (1 - background_scribbles) * self.w_ib[scribbles[:, 0], scribbles[:, 1]]
 
         canny = cv2.Canny(img_yuv, 10, 10)
         self.hori_w_hard = (1 - np.max(np.array([canny[1:, :], canny[:-1, :]]), axis=0)/255) * 0.9 + 0.1
         self.vert_w_hard = (1 - np.max(np.array([canny[:, 1:], canny[:, :-1]]), axis=0)/255) * 0.9 + 0.1
 
-
-
-
-        # print(mu)
-        # print('---' * 10)
-        # print(Sigma)
-        # print('---' * 10)
-        # print(w_if)
-        # print('---' * 10)
-        # print(w_ib)
-        # print('---' * 10)
-        # print(w_if.shape)
-        # print('---' * 10)
-        # print(w_ib.shape)
-        # print('---' * 10)
-        # print(vert_w_ij.shape)
-        # print('---' * 10)
-        # print(hori_w_ij.shape)
-        # print('---' * 10)
-        # print(vert_w_ij)
-        # print('---' * 10)
-        # print(hori_w_ij)
-
-        # return scribl_rgb
+        # plt.imshow(self.hori_w_ij.swapaxes(0, 1), cmap='gray')
+        # plt.show()
+        # plt.imshow(self.vert_w_ij.swapaxes(0, 1), cmap='gray')
+        # plt.show()
 
     def build_maxflow_graph(self):
         w = self.w_if.shape[0]

@@ -16,10 +16,12 @@ class Gui:
 
 		self.source_image = None
 		self.scribbles = None
+		self.results = None
 		self.image_size = None
 
 		self.resized_image = None
 		self.resized_scribbles = None
+		self.resized_results = None
 
 		self.screen = None
 		self.screen_size = None
@@ -46,11 +48,13 @@ class Gui:
 
 		if size_changed:
 			self.resized_image = pygame.transform.scale(self.source_image, (new_w, new_h))
+			self.resized_results = pygame.transform.scale(self.results, (new_w, new_h))
 
 		if size_changed or draw_changed:
 			self.resized_scribbles = pygame.transform.scale(self.scribbles, (new_w, new_h))
 			self.screen.fill((0, 0, 0))
 			self.screen.blit(self.resized_image, self.image_position)
+			self.screen.blit(self.resized_results, self.image_position)
 			self.screen.blit(self.resized_scribbles, self.image_position)
 
 
@@ -91,6 +95,8 @@ class Gui:
 		# --- LOADING ASSETS ---
 		self.scribbles = pygame.Surface(self.image_size, pygame.SRCALPHA)
 		self.scribbles.fill((0, 0, 0, 0))
+		self.results = pygame.Surface(self.image_size, pygame.SRCALPHA)
+		self.results.fill((0, 0, 0, 0))
 
 
 		# --- MAIN LOOP ---
@@ -108,16 +114,23 @@ class Gui:
 						np_scribbles = pygame.surfarray.array3d(self.scribbles)
 
 						# pygame.quit()
-						np_scribbles = self.segmentation_function(np_image, np_scribbles)
+						np_results = self.segmentation_function(np_image, np_scribbles)
 
-						rgb_scribbles = pygame.surfarray.pixels3d(self.scribbles)
-						alpha_scribbles = pygame.surfarray.pixels_alpha(self.scribbles)
-						rgb_scribbles[:, :, :] = np_scribbles
-						alpha_scribbles[:, :] = (np.sum(np_scribbles, axis=2) > 0) * 128
-						del rgb_scribbles
-						del alpha_scribbles
+						rgb_results = pygame.surfarray.pixels3d(self.results)
+						alpha_results = pygame.surfarray.pixels_alpha(self.results)
+						rgb_results[:, :, :] = np_results
+						alpha_results[:, :] = (np.sum(np_results, axis=2) > 0) * 128
+						del rgb_results
+						del alpha_results
 
+						size_changed = True
 						draw_changed = True
+					if event.key == pygame.K_r:
+						self.scribbles = pygame.Surface(self.image_size, pygame.SRCALPHA)
+						self.scribbles.fill((0, 0, 0, 0))
+						self.results = pygame.Surface(self.image_size, pygame.SRCALPHA)
+						self.results.fill((0, 0, 0, 0))
+						size_changed = True
 
 				if event.type == pygame.VIDEORESIZE:
 					self.screen_size = (event.w, event.h)
