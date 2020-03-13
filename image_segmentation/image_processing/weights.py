@@ -163,15 +163,13 @@ class Weights:
         # self.w_if = pf / pbf
         # self.w_ib = pb / pbf
 
-        # plt.imshow(self.w_if.swapaxes(0, 1), cmap='gray')
-        # plt.show()
-        # plt.imshow(self.w_ib.swapaxes(0, 1), cmap='gray')
-        # plt.show()
-
+        infinity = 10000
         foreground_scribbles = np.all(scribl_rgb[scribbles[:, 0], scribbles[:, 1]] == FOREGROUND, axis=1)
         background_scribbles = np.all(scribl_rgb[scribbles[:, 0], scribbles[:, 1]] == BACKGROUND, axis=1)
-        self.w_if[scribbles[:, 0], scribbles[:, 1]] = foreground_scribbles * 1000 + (1 - foreground_scribbles) * self.w_if[scribbles[:, 0], scribbles[:, 1]]
-        self.w_ib[scribbles[:, 0], scribbles[:, 1]] = background_scribbles * 1000 + (1 - background_scribbles) * self.w_ib[scribbles[:, 0], scribbles[:, 1]]
+        self.w_if[scribbles[:, 0], scribbles[:, 1]] = foreground_scribbles * infinity + (1 - foreground_scribbles) * self.w_if[scribbles[:, 0], scribbles[:, 1]]
+        self.w_if[scribbles[:, 0], scribbles[:, 1]] = (1 - background_scribbles) * self.w_if[scribbles[:, 0], scribbles[:, 1]]
+        self.w_ib[scribbles[:, 0], scribbles[:, 1]] = background_scribbles * infinity + (1 - background_scribbles) * self.w_ib[scribbles[:, 0], scribbles[:, 1]]
+        self.w_ib[scribbles[:, 0], scribbles[:, 1]] = (1 - foreground_scribbles) * self.w_ib[scribbles[:, 0], scribbles[:, 1]]
 
 
         # heatmap = np.zeros_like(vert_w_ij)
@@ -182,30 +180,11 @@ class Weights:
         self.hori_w_hard = (1 - np.max(np.array([canny[1:, :], canny[:-1, :]]), axis=0)/255) * 0.9 + 0.1
         self.vert_w_hard = (1 - np.max(np.array([canny[:, 1:], canny[:, :-1]]), axis=0)/255) * 0.9 + 0.1
 
+        # plt.imshow(self.w_if.swapaxes(0, 1), cmap='gray')
+        # plt.show()
+        # plt.imshow(self.w_ib.swapaxes(0, 1), cmap='gray')
+        # plt.show()
 
-
-
-        # print(mu)
-        # print('---' * 10)
-        # print(Sigma)
-        # print('---' * 10)
-        # print(w_if)
-        # print('---' * 10)
-        # print(w_ib)
-        # print('---' * 10)
-        # print(w_if.shape)
-        # print('---' * 10)
-        # print(w_ib.shape)
-        # print('---' * 10)
-        # print(vert_w_ij.shape)
-        # print('---' * 10)
-        # print(hori_w_ij.shape)
-        # print('---' * 10)
-        # print(vert_w_ij)
-        # print('---' * 10)
-        # print(hori_w_ij)
-
-        # return scribl_rgb
 
     def build_maxflow_graph(self):
         w = self.w_if.shape[0]
