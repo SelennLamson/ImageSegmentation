@@ -2,9 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="bb83ed4b-194e-48ff-bfd3-ba0009cbeb6e" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/image_segmentation/image_processing/gmm_weights.py" beforeDir="false" afterPath="$PROJECT_DIR$/image_segmentation/image_processing/gmm_weights.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/image_segmentation/image_processing/weights.py" beforeDir="false" afterPath="$PROJECT_DIR$/image_segmentation/image_processing/weights.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/image_segmentation/graphcut/superpixel.py" beforeDir="false" afterPath="$PROJECT_DIR$/image_segmentation/graphcut/superpixel.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -26,8 +24,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/image_segmentation/image_processing/weights.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="253">
-              <caret line="226" lean-forward="true" selection-start-line="174" selection-start-column="4" selection-end-line="226" />
+            <state relative-caret-position="114">
+              <caret line="20" column="13" selection-start-line="20" selection-start-column="6" selection-end-line="20" selection-end-column="13" />
               <folding>
                 <element signature="e#35#53#0" expanded="true" />
               </folding>
@@ -35,20 +33,11 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/image_segmentation/image_processing/gmm_weights.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="135">
-              <caret line="9" column="36" selection-start-line="9" selection-start-column="36" selection-end-line="9" selection-end-column="36" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/tests_phil.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-1458">
-              <caret line="117" column="27" selection-start-line="117" selection-start-column="27" selection-end-line="117" selection-end-column="27" />
+            <state relative-caret-position="51">
+              <caret line="183" column="50" selection-start-line="183" selection-start-column="50" selection-end-line="183" selection-end-column="50" />
               <folding>
                 <element signature="e#0#32#0" expanded="true" />
               </folding>
@@ -56,10 +45,11 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="false">
+      <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/image_segmentation/graphcut/superpixel.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-3370">
+            <state relative-caret-position="49">
+              <caret line="13" column="24" lean-forward="true" selection-start-line="13" selection-start-column="24" selection-end-line="13" selection-end-column="24" />
               <folding>
                 <element signature="e#0#18#0" expanded="true" />
               </folding>
@@ -70,7 +60,7 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/image_segmentation/graphcut/karger.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state>
+            <state relative-caret-position="-186">
               <folding>
                 <element signature="e#0#9#0" expanded="true" />
               </folding>
@@ -95,6 +85,20 @@
       <find>color</find>
       <find>scribbles</find>
       <find>get_segment</find>
+      <find>add_nei</find>
+      <find>add_neigh</find>
+      <find>get_weighted</find>
+      <find>captured_nei</find>
+      <find>sid</find>
+      <find>capture_pixel</find>
+      <find>self.neighbour</find>
+      <find>pixeliser</find>
+      <find>add_neighb</find>
+      <find>weight</find>
+      <find>self</find>
+      <find>capture</find>
+      <find>captured_n</find>
+      <find>get_weights</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -123,6 +127,7 @@
       <list>
         <option value="$PROJECT_DIR$/image_segmentation/image_processing/weights.py" />
         <option value="$PROJECT_DIR$/image_segmentation/image_processing/gmm_weights.py" />
+        <option value="$PROJECT_DIR$/image_segmentation/graphcut/superpixel.py" />
       </list>
     </option>
   </component>
@@ -147,12 +152,6 @@
               <item name="ImageSegmentation" type="b2602c69:ProjectViewProjectNode" />
               <item name="ImageSegmentation" type="462c0819:PsiDirectoryNode" />
               <item name="image_segmentation" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="ImageSegmentation" type="b2602c69:ProjectViewProjectNode" />
-              <item name="ImageSegmentation" type="462c0819:PsiDirectoryNode" />
-              <item name="image_segmentation" type="462c0819:PsiDirectoryNode" />
-              <item name="image_processing" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
@@ -260,12 +259,12 @@
       <window_info id="Structure" order="1" weight="0.25" />
       <window_info anchor="bottom" id="Educational.CheckDetails" />
       <window_info anchor="bottom" id="Version Control" />
-      <window_info anchor="bottom" id="Terminal" sideWeight="0.4964029" weight="0.3312" />
-      <window_info anchor="bottom" id="Event Log" sideWeight="0.509992" side_tool="true" visible="true" weight="0.3296" />
-      <window_info anchor="bottom" id="Python Console" sideWeight="0.5259792" weight="0.3504" />
+      <window_info anchor="bottom" id="Terminal" sideWeight="0.49560353" weight="0.3312" />
+      <window_info anchor="bottom" id="Event Log" sideWeight="0.4756195" side_tool="true" visible="true" weight="0.408" />
+      <window_info active="true" anchor="bottom" id="Python Console" sideWeight="0.5243805" visible="true" weight="0.408" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" />
-      <window_info active="true" anchor="bottom" id="Run" order="2" sideWeight="0.490008" visible="true" weight="0.3296" />
+      <window_info anchor="bottom" id="Run" order="2" sideWeight="0.490008" weight="0.3296" />
       <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
@@ -276,24 +275,6 @@
     </layout>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/image_segmentation/graphcut/superpixel.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-3370">
-          <folding>
-            <element signature="e#0#18#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/image_segmentation/graphcut/karger.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state>
-          <folding>
-            <element signature="e#0#9#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/image_segmentation/gui/gui.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="30">
@@ -310,7 +291,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/tests_phil.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-1458">
+        <state relative-caret-position="1755">
           <caret line="117" column="27" selection-start-line="117" selection-start-column="27" selection-end-line="117" selection-end-column="27" />
           <folding>
             <element signature="e#0#32#0" expanded="true" />
@@ -320,18 +301,55 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/image_segmentation/image_processing/weights.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="253">
-          <caret line="226" lean-forward="true" selection-start-line="174" selection-start-column="4" selection-end-line="226" />
+        <state relative-caret-position="114">
+          <caret line="20" column="13" selection-start-line="20" selection-start-column="6" selection-end-line="20" selection-end-column="13" />
           <folding>
             <element signature="e#35#53#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/image_segmentation/utils.py">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/image_segmentation/__init__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state>
+          <folding>
+            <element signature="e#0#31#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/main.py">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/image_segmentation/graphcut/karger.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-186">
+          <folding>
+            <element signature="e#0#9#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/image_segmentation/image_processing/gmm_weights.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="135">
-          <caret line="9" column="36" selection-start-line="9" selection-start-column="36" selection-end-line="9" selection-end-column="36" />
+        <state relative-caret-position="51">
+          <caret line="183" column="50" selection-start-line="183" selection-start-column="50" selection-end-line="183" selection-end-column="50" />
+          <folding>
+            <element signature="e#0#32#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/image_segmentation/graphcut/superpixel.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="49">
+          <caret line="13" column="24" lean-forward="true" selection-start-line="13" selection-start-column="24" selection-end-line="13" selection-end-column="24" />
+          <folding>
+            <element signature="e#0#18#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
