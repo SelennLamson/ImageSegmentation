@@ -5,7 +5,6 @@ from collections import defaultdict
 from tqdm import tqdm
 import time
 import matplotlib.pyplot as plt
-import maxflow
 
 FOREGROUND = (0, 0, 255) # blue
 BACKGROUND = (255, 0, 0) # red
@@ -122,14 +121,9 @@ class Weights:
         # Create YUV arrays
         # Rename arrays to their according color mask
         img_rgb = cv2.bilateralFilter(img_rgb, 15, 20, 20)
-<<<<<<< HEAD
-=======
-        # plt.imshow(img_rgb.swapaxes(0, 1))
-        # plt.show()
->>>>>>> 4c2e4110003ae592153502326206eaccada84eb0
 
-        img_yuv = cv2.cvtColor(img_rgb, cv2.COLOR_RGB2YUV)
-        # img_yuv = img_rgb
+        # img_yuv = cv2.cvtColor(img_rgb, cv2.COLOR_RGB2YUV)
+        img_yuv = img_rgb
 
         scribbles, mu, Sigma = self.get_probab_param(img_yuv, scribl_rgb)
 
@@ -149,7 +143,6 @@ class Weights:
         self.w_if = -self.terminal_lambda * np.log10(pb / pbf)
         self.w_ib = -self.terminal_lambda * np.log10(pf / pbf)
 
-<<<<<<< HEAD
         # Plot
         plt.imshow(self.w_if.swapaxes(0, 1), cmap='gray')
         plt.show()
@@ -166,19 +159,6 @@ class Weights:
         self.w_ib[scribbles[:, 0], scribbles[:, 1]] = background_scribbles * infinity \
                                                       + (1 - background_scribbles) * self.w_ib[scribbles[:, 0], scribbles[:, 1]]
         self.w_ib[scribbles[:, 0], scribbles[:, 1]] = (1 - foreground_scribbles) * self.w_ib[scribbles[:, 0], scribbles[:, 1]]
-=======
-        # self.w_if = pf / pbf
-        # self.w_ib = pb / pbf
-
-        infinity = 10000
-        foreground_scribbles = np.all(scribl_rgb[scribbles[:, 0], scribbles[:, 1]] == FOREGROUND, axis=1)
-        background_scribbles = np.all(scribl_rgb[scribbles[:, 0], scribbles[:, 1]] == BACKGROUND, axis=1)
-        self.w_if[scribbles[:, 0], scribbles[:, 1]] = foreground_scribbles * infinity + (1 - foreground_scribbles) * self.w_if[scribbles[:, 0], scribbles[:, 1]]
-        self.w_if[scribbles[:, 0], scribbles[:, 1]] = (1 - background_scribbles) * self.w_if[scribbles[:, 0], scribbles[:, 1]]
-        self.w_ib[scribbles[:, 0], scribbles[:, 1]] = background_scribbles * infinity + (1 - background_scribbles) * self.w_ib[scribbles[:, 0], scribbles[:, 1]]
-        self.w_ib[scribbles[:, 0], scribbles[:, 1]] = (1 - foreground_scribbles) * self.w_ib[scribbles[:, 0], scribbles[:, 1]]
-
->>>>>>> 4c2e4110003ae592153502326206eaccada84eb0
 
         # heatmap = np.zeros_like(vert_w_ij)
         # heatmap[:, :, 2] = w_if * 255
@@ -189,7 +169,6 @@ class Weights:
         self.hori_w_hard = (1 - np.max(np.array([canny[1:, :], canny[:-1, :]]), axis=0)/255) * 0.9 + 0.1
         self.vert_w_hard = (1 - np.max(np.array([canny[:, 1:], canny[:, :-1]]), axis=0)/255) * 0.9 + 0.1
 
-<<<<<<< HEAD
         # return scribl_rgb
 
 
@@ -198,21 +177,11 @@ class Weights:
         @:return: graph representation for the image, to apply mincut/maxflow algo
         """
         # Number of edges to draw (no target and source nodes yet)
-=======
-        # plt.imshow(self.w_if.swapaxes(0, 1), cmap='gray')
-        # plt.show()
-        # plt.imshow(self.w_ib.swapaxes(0, 1), cmap='gray')
-        # plt.show()
-
-
-    def build_maxflow_graph(self):
->>>>>>> 4c2e4110003ae592153502326206eaccada84eb0
         w = self.w_if.shape[0]
         h = self.w_if.shape[1]
         n_nodes = w * h
         n_edges = ((w - 1) * h + w * (h - 1)) * 2
         g = maxflow.Graph[float](n_nodes, n_edges)
-<<<<<<< HEAD
 
         nodes = g.add_nodes(n_nodes)
 
@@ -254,37 +223,4 @@ class Weights:
                 else:
                     new_img[x, y, :] = np.array([0, 0, 255])
 
-=======
-
-        nodes = g.add_nodes(n_nodes)
-
-        for x in range(w):
-            for y in range(h):
-                node_id = x * h + y
-                g.add_tedge(nodes[node_id], self.w_if[x, y], self.w_ib[x, y])
-
-                if x < w - 1:
-                    neib_id = (x + 1) * h + y
-                    g.add_edge(nodes[node_id], nodes[neib_id], self.hori_w_ij[x, y], self.hori_w_ij[x, y])
-
-                if y < h - 1:
-                    neib_id = x * h + y + 1
-                    g.add_edge(nodes[node_id], nodes[neib_id], self.vert_w_ij[x, y], self.vert_w_ij[x, y])
-
-        return g, nodes
-
-    def build_image_from_maxflow_labels(self, g, nodes):
-        w = self.w_if.shape[0]
-        h = self.w_if.shape[1]
-        new_img = np.zeros((w, h, 3), dtype=np.uint8)
-
-        for x in range(w):
-            for y in range(h):
-                node_id = x * h + y
-                if g.get_segment(nodes[node_id]):
-                    new_img[x, y, :] = np.array([255, 0, 0])
-                else:
-                    new_img[x, y, :] = np.array([0, 0, 255])
-
->>>>>>> 4c2e4110003ae592153502326206eaccada84eb0
         return new_img

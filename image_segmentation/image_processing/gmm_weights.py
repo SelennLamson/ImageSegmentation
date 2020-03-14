@@ -13,7 +13,6 @@ FOREGROUND = (0, 0, 255)
 BACKGROUND = (255, 0, 0)
 
 def gaussian(x, mu, sig):
-<<<<<<< HEAD
     """
     :param x: data
     :param mu: mean
@@ -21,9 +20,6 @@ def gaussian(x, mu, sig):
     :return: pdf of gaussian distribution
     """
     return 1/(sig * np.sqrt(2 * np.pi)) * np.exp(-(x - mu)**2 / (2 * sig**2))
-=======
-    return np.exp(-(x - mu)**2 / (2 * sig**2))
->>>>>>> 4c2e4110003ae592153502326206eaccada84eb0
 
 class GmmWeights:
     def __init__(self, non_terminal_sigma=1, terminal_lambda=10, mixture_components=5):
@@ -52,27 +48,17 @@ class GmmWeights:
         :param scribl_rgb: numpy array of shape (w, h, 3) with black everywhere and blue/red where scribbles
         :return: one models dict
         """
-<<<<<<< HEAD
         # Get coordinates of scribbles
         scribbles = self.find_scribbles(scribl_rgb)
         comps = defaultdict(lambda: np.array([]).reshape(0, 3))
 
         # Separately store background and foreground
-=======
-
-        scribbles = self.find_scribbles(scribl_rgb)
-        comps = defaultdict(lambda: np.array([]).reshape(0, 3))
-
->>>>>>> 4c2e4110003ae592153502326206eaccada84eb0
         for (i, j) in scribbles:
             c = tuple(scribl_rgb[i, j, :])
             comps[c] = np.vstack([comps[c], img_yuv[i, j, :]])
 
-<<<<<<< HEAD
         # Compute mean pixel value and variance of the scribbles
         # Mixture of Gaussians instead of multivariate gaussian
-=======
->>>>>>> 4c2e4110003ae592153502326206eaccada84eb0
         gmm = {}
         for c in comps:
             gmm[c] = GaussianMixture(n_components=self.mixture_components)
@@ -135,27 +121,16 @@ class GmmWeights:
         # Create YUV arrays
         # Rename arrays to their according color mask
         img_rgb = cv2.bilateralFilter(img_rgb, 15, 20, 20)
-<<<<<<< HEAD
 
         # img_yuv = cv2.cvtColor(img_rgb, cv2.COLOR_RGB2YUV)
         img_yuv = img_rgb
 
         scribbles, mu, Sigma = self.get_probab_param(img_yuv, scribl_rgb)
-=======
-        # plt.imshow(img_rgb.swapaxes(0, 1))
-        # plt.show()
-
-        img_yuv = cv2.cvtColor(img_rgb, cv2.COLOR_RGB2YUV)
-        # img_yuv = img_rgb
-
-        scribbles, gmm = self.get_probab_param(img_yuv, scribl_rgb)
->>>>>>> 4c2e4110003ae592153502326206eaccada84eb0
 
         # Compute non-terminal edge weights
         # Initialize zeros vectors to deal with edges
         vert_norm = np.linalg.norm(img_yuv[:, 1:] - img_yuv[:, :-1], axis=2)
         hori_norm = np.linalg.norm(img_yuv[1:, :] - img_yuv[:-1, :], axis=2)
-<<<<<<< HEAD
         self.vert_w_ij = self.non_terminal_weights(vert_norm)
         self.hori_w_ij = self.non_terminal_weights(hori_norm)
 
@@ -190,33 +165,10 @@ class GmmWeights:
         # heatmap[:, :, 0] = w_ib * 255
 
         # Add a canny edge detector
-=======
-
-        self.vert_w_ij = self.non_terminal_weights(vert_norm)
-        self.hori_w_ij = self.non_terminal_weights(hori_norm)
-
-        # Compute terminal edges weights
-        pf = self.terminal_class_proba(img_yuv, FOREGROUND, gmm)
-        pb = self.terminal_class_proba(img_yuv, BACKGROUND, gmm)
-        pbf = pf + pb
-
-        self.w_if = - self.terminal_lambda * np.log10(pf / pbf)
-        self.w_ib = - self.terminal_lambda * np.log10(pb / pbf)
-
-        infinity = 10000
-        foreground_scribbles = np.all(scribl_rgb[scribbles[:, 0], scribbles[:, 1]] == FOREGROUND, axis=1)
-        background_scribbles = np.all(scribl_rgb[scribbles[:, 0], scribbles[:, 1]] == BACKGROUND, axis=1)
-        self.w_if[scribbles[:, 0], scribbles[:, 1]] = foreground_scribbles * infinity + (1 - foreground_scribbles) * self.w_if[scribbles[:, 0], scribbles[:, 1]]
-        self.w_if[scribbles[:, 0], scribbles[:, 1]] = (1 - background_scribbles) * self.w_if[scribbles[:, 0], scribbles[:, 1]]
-        self.w_ib[scribbles[:, 0], scribbles[:, 1]] = background_scribbles * infinity + (1 - background_scribbles) * self.w_ib[scribbles[:, 0], scribbles[:, 1]]
-        self.w_ib[scribbles[:, 0], scribbles[:, 1]] = (1 - foreground_scribbles) * self.w_ib[scribbles[:, 0], scribbles[:, 1]]
-
->>>>>>> 4c2e4110003ae592153502326206eaccada84eb0
         canny = cv2.Canny(img_yuv, 10, 10)
         self.hori_w_hard = (1 - np.max(np.array([canny[1:, :], canny[:-1, :]]), axis=0)/255) * 0.9 + 0.1
         self.vert_w_hard = (1 - np.max(np.array([canny[:, 1:], canny[:, :-1]]), axis=0)/255) * 0.9 + 0.1
 
-<<<<<<< HEAD
         # return scribl_rgb
 
 
@@ -225,14 +177,6 @@ class GmmWeights:
         @:return: graph representation for the image, to apply mincut/maxflow algo
         """
         # Number of edges to draw (no target and source nodes yet)
-=======
-        # plt.imshow(self.w_if.swapaxes(0, 1), cmap='gray')
-        # plt.show()
-        # plt.imshow(self.w_ib.swapaxes(0, 1), cmap='gray')
-        # plt.show()
-
-    def build_maxflow_graph(self):
->>>>>>> 4c2e4110003ae592153502326206eaccada84eb0
         w = self.w_if.shape[0]
         h = self.w_if.shape[1]
         n_nodes = w * h
@@ -241,34 +185,24 @@ class GmmWeights:
 
         nodes = g.add_nodes(n_nodes)
 
-<<<<<<< HEAD
         # Create nodes and join (grid representation)
-=======
->>>>>>> 4c2e4110003ae592153502326206eaccada84eb0
         for x in range(w):
             for y in range(h):
                 node_id = x * h + y
                 g.add_tedge(nodes[node_id], self.w_if[x, y], self.w_ib[x, y])
 
-<<<<<<< HEAD
                 # Add horizontal edges
-=======
->>>>>>> 4c2e4110003ae592153502326206eaccada84eb0
                 if x < w - 1:
                     neib_id = (x + 1) * h + y
                     g.add_edge(nodes[node_id], nodes[neib_id], self.hori_w_ij[x, y], self.hori_w_ij[x, y])
 
-<<<<<<< HEAD
                 # Add vertical edges
-=======
->>>>>>> 4c2e4110003ae592153502326206eaccada84eb0
                 if y < h - 1:
                     neib_id = x * h + y + 1
                     g.add_edge(nodes[node_id], nodes[neib_id], self.vert_w_ij[x, y], self.vert_w_ij[x, y])
 
         return g, nodes
 
-<<<<<<< HEAD
 
     def build_image_from_maxflow_labels(self, g, nodes):
         """
@@ -277,9 +211,6 @@ class GmmWeights:
         :return: final image with predicted location of background and foreground
         """
         # Number of edges to draw
-=======
-    def build_image_from_maxflow_labels(self, g, nodes):
->>>>>>> 4c2e4110003ae592153502326206eaccada84eb0
         w = self.w_if.shape[0]
         h = self.w_if.shape[1]
         new_img = np.zeros((w, h, 3), dtype=np.uint8)
@@ -293,7 +224,4 @@ class GmmWeights:
                     new_img[x, y, :] = np.array([0, 0, 255])
 
         return new_img
-<<<<<<< HEAD
 
-=======
->>>>>>> 4c2e4110003ae592153502326206eaccada84eb0
