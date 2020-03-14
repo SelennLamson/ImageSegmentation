@@ -60,6 +60,7 @@ class Gui:
 
 	def start(self, file_name=None):
 		# --- LOADING A SAVED FILE ---
+		# Define folder where images are stored
 		base_path = "images/"
 		if file_name is None or not os.path.exists(base_path + file_name):
 			saved = [f for f in os.listdir(base_path) if f.endswith('.png') or f.endswith('.png') or f.endswith('.jpeg')]
@@ -76,8 +77,13 @@ class Gui:
 						break
 					except (ValueError, AssertionError):
 						pass
+
+			# Define filename as the desired image's name (e.g 'polar_bear.png')
 			file_name = saved[ans]
+
+		# Load image in pygame
 		self.source_image = pygame.image.load(base_path + file_name)
+		# Store image size
 		self.image_size = (self.source_image.get_width(), self.source_image.get_height())
 
 
@@ -113,9 +119,12 @@ class Gui:
 						np_image = pygame.surfarray.array3d(self.source_image)
 						np_scribbles = pygame.surfarray.array3d(self.scribbles)
 
-						# pygame.quit()
+						#pygame.quit()
+
+						# Apply segmentation function
 						np_results = self.segmentation_function(np_image, np_scribbles)
 
+						# Use results from segmentation method above
 						rgb_results = pygame.surfarray.pixels3d(self.results)
 						alpha_results = pygame.surfarray.pixels_alpha(self.results)
 						rgb_results[:, :, :] = np_results

@@ -160,16 +160,16 @@ class Weights:
                                                       + (1 - background_scribbles) * self.w_ib[scribbles[:, 0], scribbles[:, 1]]
         self.w_ib[scribbles[:, 0], scribbles[:, 1]] = (1 - foreground_scribbles) * self.w_ib[scribbles[:, 0], scribbles[:, 1]]
 
-        # heatmap = np.zeros_like(vert_w_ij)
-        # heatmap[:, :, 2] = w_if * 255
-        # heatmap[:, :, 0] = w_ib * 255
+        #heatmap = np.zeros_like(vert_w_ij)
+        #heatmap[:, :, 2] = w_if * 255
+        #heatmap[:, :, 0] = w_ib * 255
 
-        # Add a canny edge detector
+        # Add a canny edge detector and define relative weights
         canny = cv2.Canny(img_yuv, 10, 10)
         self.hori_w_hard = (1 - np.max(np.array([canny[1:, :], canny[:-1, :]]), axis=0)/255) * 0.9 + 0.1
         self.vert_w_hard = (1 - np.max(np.array([canny[:, 1:], canny[:, :-1]]), axis=0)/255) * 0.9 + 0.1
 
-        # return scribl_rgb
+        #return w_ib, w_if
 
 
     def build_maxflow_graph(self):

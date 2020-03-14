@@ -83,24 +83,27 @@ class SuperPixel:
 
 class SuperPixeliser:
 	def __init__(self, source_img, nb_superpixels=10000, subdivide_size=100):
-		self.nb_superpixels = nb_superpixels
-		self.subdivide_size = subdivide_size
-
+		self.nb_superpixels = nb_superpixels  # number of superpixels
+		self.subdivide_size = subdivide_size  # size of regions
 		self.source_img = source_img
 		self.w = source_img.shape[0]
 		self.h = source_img.shape[1]
+		self.superpixels: List[SuperPixel] = []
+		self.colors = []
+
+		# Init weights matrices
 		self.weights_vert_hard = None
 		self.weights_hori_hard = None
 		self.weights_vert = None
 		self.weights_hori = None
 		self.divided_img = np.zeros((self.w + 2, self.h + 2), dtype=int)
+
+		# Add a 1 pixel border all around the image with value -1 everywhere
 		self.divided_img[0, :] = -1
 		self.divided_img[-1, :] = -1
 		self.divided_img[:, 0] = -1
 		self.divided_img[:, -1] = -1
 
-		self.superpixels: List[SuperPixel] = []
-		self.colors = []
 
 	def initialize_weights(self, weights_vert, weights_hori, weights_vert_hard, weights_hori_hard):
 		"""
@@ -172,7 +175,7 @@ class SuperPixeliser:
 
 	def grow_superpixels(self, verbose=True):
 		"""
-		:return: grow a superpixel by adding some neighbours, based on their relation/similarity with superpixel
+		:return: grow superpixels by adding some neighbours, based on their relation/similarity with superpixel
 		"""
 		it = 0
 		total = self.h * self.w
@@ -285,7 +288,7 @@ class SuperPixeliser:
 	def get_labeled_image(self, labels):
 		"""
 		:param labels: set of labels for each pixel/superpixel (background or foreground)
-		:return: retrieve the blue and red image, output of the mincut/maxflow algo
+		:return: display the segmented  image, output of the mincut/maxflow algo
 		"""
 
 		# Source
