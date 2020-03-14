@@ -7,6 +7,7 @@ import cv2
 import matplotlib.pyplot as plt
 from collections import defaultdict
 import image_segmentation as seg
+import maxflow
 
 
 class SuperPixel:
@@ -282,6 +283,39 @@ class SuperPixeliser:
 
 		return g
 
+	def create_maxflow_graph(self, w_if, w_ib):
+		edges: Dict[Tuple(int, int), float] = defaultdict(float)
+		terminal_edges: Dict[int, Tuple(float, float)] = defaultdict(lambda: (0, 0))
+
+		for sp1 in self.superpixels:
+			i1 = sp1.sid
+			for nei, ws in sp1.captured_neighbours.items():
+				i2 = self.divided_img[nei]
+				if i1 != i2:
+					edges[i1, i2] += sum(ws)
+					edges[i2, i1] += sum(ws)
+
+		for x in range(self.w):
+			for y in range(self.h):
+				i = self.divided_img[x + 1, y + 1]
+				terminal_edges[i] = (terminal_edges[i][0] + w_if[x, y], terminal_edges[i][1] + w_ib[x, y])
+
+				if w_if[x, y] > 500:
+					self.colors[i - 1] = np.array([0, 0, 255])
+				elif w_ib[x, y] > 500:
+					self.colors[i - 1] = np.array([255, 0, 0])
+
+		g = maxflow.Graph[float](len(self.superpixels), len(edges))
+		nodes = g.add_nodes(len(self.superpixels))
+
+		for (n1, n2), w in edges.items():
+			g.add_edge(nodes[n1 - 1], nodes[n2 - 1], w, w)
+
+		for node, (fw, bw) in terminal_edges.items():
+			g.add_tedge(nodes[node - 1], fw, bw)
+
+		return g, nodes
+
 	def get_labeled_image(self, labels):
 		"""
 		:param labels: set of labels for each pixel/superpixel (background or foreground)
@@ -306,6 +340,21 @@ class SuperPixeliser:
 				if index > -1:
 					new_img[x, y, :] = self.colors[self.divided_img[x + 1, y + 1] - 1]
 
+		return new_img
+
+	def get_labeled_image_maxflow(self, graph, nodes):
+		for i in range(len(self.superpixels)):
+			if graph.get_segment(nodes[i]):
+				self.colors[i] = np.array([255, 0, 0])
+			else:
+				self.colors[i] = np.array([0, 0, 255])
+
+		new_img = np.zeros_like(self.source_img)
+		for x in range(self.w):
+			for y in range(self.h):
+				index = self.divided_img[x + 1, y + 1] - 1
+				if index > -1:
+					new_img[x, y, :] = self.colors[self.divided_img[x + 1, y + 1] - 1]
 		return new_img
 
 	def plot(self, pause=False):

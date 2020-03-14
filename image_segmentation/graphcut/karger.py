@@ -19,12 +19,14 @@ class Graph:
 		return len(self.nodes)
 
 	def __repr__(self):
+		# Print the number of nodes
 		result = "--- Graph: ---\n"
 		result += str(self.nodes) + "\n"
 		result += "-------------"
 		return result
 
 	def copy(self):
+		# Copy the graph
 		new_graph = Graph()
 		new_graph.nodes = deepcopy(self.nodes)
 		new_graph.groups = deepcopy(self.groups)
@@ -118,24 +120,31 @@ class Graph:
 
 if __name__ == 'main':
 
+	# Number of times we repeat the algo
 	n = 10
 	lengths = np.zeros(n)
 
 	avg_time = None
 
 	for i in range(n):
+
+		# Create the graph on which to perform Karger algo
 		g = Graph()
 		# g.load_graph('kargerMinCut.txt')
 		g.random_grid_graph(100)
 
 		start_length = len(self)
+
+		# While we have more than 2 vertices left, do
 		while len(g) > 2:
 			now = time.time()
+
+			# Contract an edge, chosen uniformly at random
 			re = g.get_random_edge()
-
 			g.contract_edge(*re)
-			elapsed = time.time() - now
 
+			# Check time taken
+			elapsed = time.time() - now
 			if elapsed is not None:
 				if avg_time is None:
 					avg_time = elapsed
@@ -150,5 +159,6 @@ if __name__ == 'main':
 		# lengths[i] = min([1 if not isinstance(node, Node) else len(node.subnodes) for node in g.nodes])
 		# lengths[i] = min([1 if not isinstance(node, Node) else len(node.subnodes) for node in g.nodes])
 
+	# Plot
 	plt.hist(lengths)
 	plt.show()
