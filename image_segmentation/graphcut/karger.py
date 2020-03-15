@@ -90,8 +90,10 @@ class Graph:
 				best_labels = (h.groups[0], h.groups[1])
 			print("\rKarger: {:.2f}%, best-cut: {}".format(100 * it / n_iter, best_cut), end="")
 		print("")
+		print('best labels: ', best_labels)
 		return best_cut, best_labels
 
+	'''
 	def random_grid_graph(self, side):
 		# Create graph, as we would like
 		G = nx.grid_2d_graph(side, side)
@@ -115,9 +117,9 @@ class Graph:
 			n1 = 2 + e[0][0] + e[0][1] * side
 			n2 = 2 + e[1][0] + e[1][1] * side
 			self.add_edge(n1, n2, weights[i])
+	'''
 
-
-
+'''
 if __name__ == 'main':
 
 	# Number of times we repeat the algo
@@ -162,3 +164,4 @@ if __name__ == 'main':
 	# Plot
 	plt.hist(lengths)
 	plt.show()
+'''
