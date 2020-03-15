@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 FOREGROUND = (0, 0, 255) # blue
 BACKGROUND = (255, 0, 0) # red
 
+
 def gaussian(x, mu, sig):
     """
     :param x: data
@@ -112,6 +113,25 @@ class Weights:
         res = np.sum(res * diff, axis=2)
         return np.exp(-0.5 * res) / np.sqrt(two_pi_k * np.linalg.det(sigma))
 
+
+    def gaussian_non_terminal_weights(self, vert_weights, hori_weights):
+        """
+        :param vert_w_ij: vertical non terminal weights
+        :param hori_w_ij: horizontal non terminal weights
+        :return: rescaled non terminal weights matrices (horizontal and vertical)
+        """
+        # Compute parameters of the distrib
+        mu = (np.mean(vert_weights) + np.mean(hori_weights)) / 2
+        std = (np.std(vert_weights) + np.std(hori_weights)) / 2
+
+        print('mu/std: ', mu, std)
+
+        # Rescale all non terminal weights
+        vertical = 0.5 + (vert_weights - mu) / (np.sqrt(2) * std)
+        horizontal = 0.5 + (hori_weights - mu) / (np.sqrt(2) * std)
+
+        return vertical, horizontal
+
     def compute_weights(self, img_rgb, scribl_rgb):
         """
         :param img_rgb: numpy array of shape (w, h, 3) containing the RGB image to work on
@@ -133,6 +153,9 @@ class Weights:
         hori_norm = np.linalg.norm(img_yuv[1:, :] - img_yuv[:-1, :], axis=2)
         self.vert_w_ij = self.non_terminal_weights(vert_norm)
         self.hori_w_ij = self.non_terminal_weights(hori_norm)
+
+        # Rescale non terminal weights to follow
+        self.vert_w_ij, self.hori_w_ij = self.gaussian_non_terminal_weights(self.vert_w_ij, self.hori_w_ij)
 
         # Compute proba of the color given background/foreground
         pf = self.terminal_class_proba(img_yuv, FOREGROUND, mu, Sigma)

@@ -175,6 +175,8 @@ class SuperPixeliser:
 
 	def grow_superpixels(self, verbose=True):
 		"""
+		:param mu: mean of non terminal edges distrib
+		:param std: std of non terminal edges distrib
 		:return: grow superpixels by adding some neighbours, based on their relation/similarity with superpixel
 		"""
 		it = 0
