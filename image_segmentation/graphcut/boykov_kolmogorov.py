@@ -1,3 +1,5 @@
+from typing import List
+import numpy as np
 
 class Node:
 	def __init__(self, index):
@@ -7,30 +9,42 @@ class Node:
 		self.dist = None
 
 class Edge:
-	def __init__(self, initial_vertex, terminal_vertex, inv_edge_index):
+	def __init__(self, initial_vertex, terminal_vertex, inv_edge_index, weight):
 		self.initial_vertex = initial_vertex
 		self.terminal_vertex = terminal_vertex
-		self.capacity = None
+		self.capacity = weight
 		self.flow = None
 		self.inv_edge_index: int = inv_edge_index
 
 class BoykovKolmogorov:
-	def __init__(self, width, height):
-		self.eps = 1e-3
+	def __init__(self, width, height, source_weights, target_weights, hori_weights, vert_weights):
+		print("Initializing Boykov-Kolmogorov algorithm")
+
+		print(source_weights.mean())
+		print(target_weights.mean())
+		print(hori_weights.mean())
+		print(vert_weights.mean())
+
+		self.eps = 1e-4
 		self.w = width
 		self.h = height
 		self.nb_nodes = self.w * self.h + 2
+		self.nb_edges = self.w * self.h * 4 + self.w * (self.h - 1) * 2 + (self.w - 1) * self.h * 2
 		self.nodes: List[Node] = []
+		# self.edges: List[Edge] = [None] * self.nb_edges
 		self.edges: List[Edge] = []
-		self.starting_edges: List[List[int]] = [None] * self.nb_nodes
+		self.starting_edges: List[List[int]] = []
 
 		neighbours_to_create = [(1, 0), (0, 1)]
 
 		# Creating nodes
 		self.nodes.append(Node(0))	# Source
+		self.starting_edges.append([])
 		self.nodes.append(Node(1))	# Target
+		self.starting_edges.append([])
 		for x in range(self.w):
 			for y in range(self.h):
+				self.starting_edges.append([])
 				i = x * self.h + y + 2
 				assert i == len(self.nodes)
 				self.nodes.append(Node(i))	# Pixel
@@ -46,20 +60,23 @@ class BoykovKolmogorov:
 			for y in range(self.h):
 				i1 = x * self.h + y + 2
 
+				w_src = source_weights[x, y]
+				w_tar = target_weights[x, y]
+
 				# Node to source
-				self.edges.append(Edge(i1, 0, len(self.edges)))
+				self.edges.append(Edge(i1, 0, len(self.edges) + 1, w_src))
 				self.starting_edges[i1].append(len(self.edges) - 1)
 
 				# Source to node
-				self.edges.append(Edge(0, i1, len(self.edges) - 2))
+				self.edges.append(Edge(0, i1, len(self.edges) - 1, w_src))
 				self.starting_edges[0][i1 - 2] = len(self.edges) - 1
 
 				# Node to target
-				self.edges.append(Edge(i1, 1, len(self.edges)))
+				self.edges.append(Edge(i1, 1, len(self.edges) + 1, w_tar))
 				self.starting_edges[i1].append(len(self.edges) - 1)
 
 				# Target to node
-				self.edges.append(Edge(1, i1, len(self.edges) - 2))
+				self.edges.append(Edge(1, i1, len(self.edges) - 1, w_tar))
 				self.starting_edges[1][i1 - 2] = len(self.edges) - 1
 
 				# Neighbours
@@ -70,12 +87,17 @@ class BoykovKolmogorov:
 						continue
 					i2 = nx * self.h + ny + 2
 
+					if nx == x:
+						w_neighbours = vert_weights[x, y]
+					else:
+						w_neighbours = hori_weights[x, y]
+
 					# Node to neighbour
-					self.edges.append(Edge(i1, i2, len(self.edges)))
+					self.edges.append(Edge(i1, i2, len(self.edges) + 1, w_neighbours))
 					self.starting_edges[i1].append(len(self.edges) - 1)
 
 					# Neighbour to node
-					self.edges.append(Edge(i2, i1, len(self.edges) - 2))
+					self.edges.append(Edge(i2, i1, len(self.edges) - 1, w_neighbours))
 					self.starting_edges[i2].append(len(self.edges) - 1)
 
 		# Graph-cut algorithm variables
@@ -84,22 +106,17 @@ class BoykovKolmogorov:
 		self.is_in_s: List[bool] = []
 		self.is_in_a: List[bool] = []
 
-	def set_internal_weight(self, x1, y1, x2, y2, w):
-		i1 = x1 * self.h + y1 + 2
-		i2 = x2 * self.w + y2 + 2
-		for edge_index in self.starting_edges[i1]:
-			if self.edges[edge_index].terminal_vertex == i2:
-				self.edges[edge_index].capacity = w
-				self.edges[self.edges[edge_index].inv_edge_index].capacity = w
-
-	def set_terminal_weights(self, w_source, w_target):
+	def get_labeled_image(self) -> np.ndarray:
+		print("Generating labelled image")
+		img = np.zeros((self.w, self.h, 3), dtype=np.uint8)
 		for x in range(self.w):
 			for y in range(self.h):
-				i1 = x * self.h + y
-				self.edges[self.starting_edges[0][i1]].capacity = w_source[x, y]
-				self.edges[self.edges[self.starting_edges[0][i1]].inv_edge_index].capacity = w_source[x, y]
-				self.edges[self.starting_edges[1][i1]].capacity = w_target[x, y]
-				self.edges[self.edges[self.starting_edges[1][i1]].inv_edge_index].capacity = w_target[x, y]
+				i = x * self.h + y + 2
+				if self.is_in_s[i]:
+					img[x, y] = np.array([0, 0, 255])
+				else:
+					img[x, y] = np.array([255, 0, 0])
+		return img
 
 	def reset_flow(self):
 		for edge in self.edges:
@@ -122,7 +139,12 @@ class BoykovKolmogorov:
 		for node in self.nodes:
 			node.prev_edge_index = -1
 
+		it = 0
 		while True:
+			it += 1
+			if it % 1000 == 0:
+				print("\rIteration", it, "- In S:", sum(self.is_in_s), end="")
+
 			last_edge_index = self.growth_stage()
 			if last_edge_index == -1:
 				return
@@ -159,7 +181,7 @@ class BoykovKolmogorov:
 					self.is_in_s[tv] = True
 					self.nodes[tv].prev_edge_index = edge_index
 
-				# The non-active node was the target, we return the edge index to ther
+				# The non-active node was the target, we return the edge index to there
 				if current_edge.terminal_vertex == 1:
 					return edge_index
 

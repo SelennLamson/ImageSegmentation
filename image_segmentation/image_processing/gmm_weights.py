@@ -106,11 +106,10 @@ class GmmWeights:
         """
         :param img_yuv: image values (YUV format)
         :param group: BACKGROUND or FOREGROUND constant
-        :param mu: dictionnary containing the mean value of pixels y u v
-        :param Sigma: dictionnary containing the covariance matrix
+        :param gmm: dictionnary containing the gaussian mixtures models
         """
         model = gmm[group]
-        return model.score_samples(img_yuv.reshape(img_yuv.shape[0] * img_yuv.shape[1], 3)).reshape(img_yuv.shape[0], img_yuv.shape[1])
+        return np.exp(model.score_samples(img_yuv.reshape(img_yuv.shape[0] * img_yuv.shape[1], 3)).reshape(img_yuv.shape[0], img_yuv.shape[1]))
 
     def compute_weights(self, img_rgb, scribl_rgb):
         """
@@ -125,7 +124,7 @@ class GmmWeights:
         # img_yuv = cv2.cvtColor(img_rgb, cv2.COLOR_RGB2YUV)
         img_yuv = img_rgb
 
-        scribbles, mu, Sigma = self.get_probab_param(img_yuv, scribl_rgb)
+        scribbles, gmm = self.get_probab_param(img_yuv, scribl_rgb)
 
         # Compute non-terminal edge weights
         # Initialize zeros vectors to deal with edges
@@ -135,19 +134,22 @@ class GmmWeights:
         self.hori_w_ij = self.non_terminal_weights(hori_norm)
 
         # Compute proba of the color given background/foreground
-        pf = self.terminal_class_proba(img_yuv, FOREGROUND, mu, Sigma)
-        pb = self.terminal_class_proba(img_yuv, BACKGROUND, mu, Sigma)
+        pf = self.terminal_class_proba(img_yuv, FOREGROUND, gmm)
+        pb = self.terminal_class_proba(img_yuv, BACKGROUND, gmm)
         pbf = pf + pb
 
         # Compute terminal edges weights (non scribbled pixels)
         self.w_if = -self.terminal_lambda * np.log10(pb / pbf)
         self.w_ib = -self.terminal_lambda * np.log10(pf / pbf)
 
+        # self.w_if = pf / pbf
+        # self.w_ib = pb / pbf
+
         # Plot
-        plt.imshow(self.w_if.swapaxes(0, 1), cmap='gray')
-        plt.show()
-        plt.imshow(self.w_ib.swapaxes(0, 1), cmap='gray')
-        plt.show()
+        # plt.imshow(self.w_if.swapaxes(0, 1), cmap='gray')
+        # plt.show()
+        # plt.imshow(self.w_ib.swapaxes(0, 1), cmap='gray')
+        # plt.show()
 
         # Change the terminal weights of scribbled pixel to 0 or infinity
         infinity = 10000
