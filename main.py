@@ -24,8 +24,8 @@ def perform_image_segmentation(image, scribbles):
 		superpixeliser.initialize_weights(weights.vert_w_ij, weights.hori_w_ij, weights.vert_w_hard, weights.hori_w_hard)
 		superpixeliser.initialize_seeds()
 		superpixeliser.grow_superpixels(verbose=True)
-		superpixeliser.plot()
 		graph = superpixeliser.create_karger_graph(weights.w_if, weights.w_ib)
+		superpixeliser.plot()
 		best_cut, best_labels = graph.perform_karger(1000)
 		result = superpixeliser.get_labeled_image(best_labels)
 

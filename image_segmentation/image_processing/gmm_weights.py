@@ -136,11 +136,11 @@ class GmmWeights:
         # Compute proba of the color given background/foreground
         pf = self.terminal_class_proba(img_yuv, FOREGROUND, gmm)
         pb = self.terminal_class_proba(img_yuv, BACKGROUND, gmm)
-        pbf = pf + pb
+        pbf = pf + pb + 0.0001
 
         # Compute terminal edges weights (non scribbled pixels)
-        self.w_if = -self.terminal_lambda * np.log10(pb / pbf)
-        self.w_ib = -self.terminal_lambda * np.log10(pf / pbf)
+        self.w_if = -self.terminal_lambda * np.log10(0.0001 + pb / pbf)
+        self.w_ib = -self.terminal_lambda * np.log10(0.0001 + pf / pbf)
 
         # self.w_if = pf / pbf
         # self.w_ib = pb / pbf

@@ -12,9 +12,9 @@ class SuperPixel:
 	def __init__(self, sid):
 		# Superpixel id
 		self.sid: int = sid
-		# Free pixels on the frontier of this superpixel, and their associated weights (soft and hard weights)
+		# Free pixels on the frontier of this superpixel, and their associated weights (hard and soft weights)
 		self.neighbours: Dict[Tuple[int, int], List[float, float]] = defaultdict(list)
-		# Pixels on the frontier that already belongs to another superpixel
+		# Pixels on the frontier that already belongs to another superpixel, and their associated soft weights
 		self.captured_neighbours: Dict[Tuple[int, int], List[float]] = defaultdict(list)
 
 	def get_weighted_neigbours(self, divided_img, pixeliser):
@@ -37,14 +37,14 @@ class SuperPixel:
 
 				# We register it to the list of captured neighbours if it is not captured by this superpixel
 				if other_region != self.sid:
-					self.captured_neighbours[nei] = [w for _, w in ws]
+					self.captured_neighbours[nei] += [w for _, w in ws]
 
 			# Neighbour is free
 			else:
 				neighbours.append(nei)
 
 				# The probability to capture a new pixel depends on the number of sides it is 'attacked' from, and of their respective weights
-				weights.append(sum(w for w, _ in ws) / 3)
+				weights.append(sum(w for w, _ in ws) / 4)
 
 		# If pixel has just been captured by another superpixel, discard it from free neighbours
 		for to_rem in to_remove:
@@ -75,7 +75,7 @@ class SuperPixel:
 
 			# If already captured by another superpixel, add it to list of captured neighbours
 			elif oid != self.sid and oid != -1:
-				self.captured_neighbours[nei].append(pixeliser.get_weights(x, y, *nei))
+				self.captured_neighbours[nei].append(pixeliser.get_weights(x, y, *nei)[0])
 
 	def capture_pixel(self, coords, divided_img, pixeliser):
 		"""
