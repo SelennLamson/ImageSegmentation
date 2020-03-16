@@ -7,7 +7,7 @@ import numpy as np
 from image_segmentation.utils import *
 
 
-DRAW_RADIUS = 5
+DRAW_RADIUS = 3
 
 
 class Gui:

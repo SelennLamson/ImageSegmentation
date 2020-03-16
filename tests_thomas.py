@@ -1,13 +1,12 @@
 import image_segmentation as seg
 import maxflow
-from image_segmentation.graphcut.boykov_kolmogorov_np import BoykovKolmogorov
 
 
 def perform_image_segmentation(image, scribbles):
-	weights = seg.GmmWeights(non_terminal_sigma=20, terminal_lambda=.1, mixture_components=3)
+	weights = seg.GmmWeights(non_terminal_sigma=20, terminal_lambda=0.1, mixture_components=4)
 	weights.compute_weights(image, scribbles)
 
-	graph = BoykovKolmogorov(image.shape[0], image.shape[1], weights.w_if, weights.w_ib, weights.hori_w_ij, weights.vert_w_ij)
+	graph = seg.BoykovKolmogorov(image.shape[0], image.shape[1], weights.w_if, weights.w_ib, weights.hori_w_ij, weights.vert_w_ij)
 	graph.do_cut()
 	result = graph.get_labeled_image()
 

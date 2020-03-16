@@ -1,4 +1,4 @@
-from graph import Graphs
+from .push_relabel_graph import PushRelabelGraph
 
 class PushRelabel: 
     def _get_active_node(self, graph, s, t):

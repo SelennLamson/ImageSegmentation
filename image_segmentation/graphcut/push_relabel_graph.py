@@ -1,6 +1,6 @@
 from collections import OrderedDict          # use ordered dicts to preserve element ordering
 
-class Graphs:
+class PushRelabelGraph:
     """
     Represents a graph.
     """

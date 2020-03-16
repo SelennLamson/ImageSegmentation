@@ -18,14 +18,7 @@ class Edge:
 
 class BoykovKolmogorov:
 	def __init__(self, width, height, source_weights, target_weights, hori_weights, vert_weights):
-		print("Initializing Boykov-Kolmogorov algorithm")
-
-		print(source_weights.mean())
-		print(target_weights.mean())
-		print(hori_weights.mean())
-		print(vert_weights.mean())
-
-		self.eps = 1e-4
+		self.eps = 1e-3
 		self.w = width
 		self.h = height
 		self.nb_nodes = self.w * self.h + 2
