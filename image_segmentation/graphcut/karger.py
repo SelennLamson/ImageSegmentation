@@ -80,15 +80,24 @@ class Karger:
 		return h
 
 	def perform_karger(self, n_iter):
+		avg_time = None
 		best_cut = None
 		best_labels = None
 		for it in range(n_iter):
+			now = time.time()
+
 			h = self.perform_random_cut()
 			cut = h.nodes[0][1]
 			if best_cut is None or cut < best_cut:
 				best_cut = cut
 				best_labels = (h.groups[0], h.groups[1])
-			print("\rKarger: {:.2f}%, best-cut: {}".format(100 * it / n_iter, best_cut), end="")
+
+			elapsed = time.time() - now
+			if avg_time is None:
+				avg_time = elapsed
+			else:
+				avg_time = 0.9 * avg_time + 0.1 * elapsed
+			print("\rKarger: {:.2f}%, best-cut: {}, time: {}ms".format(100 * it / n_iter, best_cut, avg_time * 1000), end="")
 		print("")
 		print('best labels: ', best_labels)
 		return best_cut, best_labels
