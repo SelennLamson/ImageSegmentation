@@ -18,7 +18,7 @@ def perform_image_segmentation(image, scribbles):
     superpixeliser.grow_superpixels(verbose=True)
 
     # Create the graph corresponding to above image transformation
-    graph = superpixeliser.create_graph(weights.w_if, weights.w_ib)
+    graph = superpixeliser.create_karger_graph(weights.w_if, weights.w_ib)
     superpixeliser.plot()
     #result = graph
 

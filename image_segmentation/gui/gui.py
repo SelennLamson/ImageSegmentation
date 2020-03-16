@@ -25,12 +25,16 @@ class Gui:
 
 		self.screen = None
 		self.screen_size = None
+		self.font = None
 
 		self.image_position = (0, 0)
 		self.image_zoom = 1
 
 		self.prev_draw_pos = (0, 0)
 		self.prev_draw_mode = 0
+
+		self.algorithms = ['maxflow', 'boykov-kolmogorov', 'push-relabel', 'karger']
+		self.algorithm = self.algorithms[0]
 
 
 	def update_screen(self, size_changed, draw_changed):
@@ -56,6 +60,9 @@ class Gui:
 			self.screen.blit(self.resized_image, self.image_position)
 			self.screen.blit(self.resized_results, self.image_position)
 			self.screen.blit(self.resized_scribbles, self.image_position)
+
+			alg_txt = self.font.render("Algorithm: " + self.algorithm, True, (255, 255, 255))
+			self.screen.blit(alg_txt, (10, 10))
 
 
 	def start(self, file_name=None):
@@ -94,9 +101,7 @@ class Gui:
 
 		self.screen = pygame.display.set_mode(self.screen_size, pygame.RESIZABLE)
 		clock = pygame.time.Clock()
-		font = pygame.font.SysFont('consolas', 24, True)
-		small_font = pygame.font.SysFont('consolas', 16, False)
-
+		self.font = pygame.font.SysFont('consolas', 20, True)
 
 		# --- LOADING ASSETS ---
 		self.scribbles = pygame.Surface(self.image_size, pygame.SRCALPHA)
@@ -140,6 +145,21 @@ class Gui:
 						self.results = pygame.Surface(self.image_size, pygame.SRCALPHA)
 						self.results.fill((0, 0, 0, 0))
 						size_changed = True
+					if event.key == pygame.K_1 and len(self.algorithms) >= 1:
+						self.algorithm = self.algorithms[0]
+						draw_changed = True
+					if event.key == pygame.K_2 and len(self.algorithms) >= 2:
+						self.algorithm = self.algorithms[1]
+						draw_changed = True
+					if event.key == pygame.K_3 and len(self.algorithms) >= 3:
+						self.algorithm = self.algorithms[2]
+						draw_changed = True
+					if event.key == pygame.K_4 and len(self.algorithms) >= 4:
+						self.algorithm = self.algorithms[3]
+						draw_changed = True
+					if event.key == pygame.K_5 and len(self.algorithms) >= 5:
+						self.algorithm = self.algorithms[4]
+						draw_changed = True
 
 				if event.type == pygame.VIDEORESIZE:
 					self.screen_size = (event.w, event.h)

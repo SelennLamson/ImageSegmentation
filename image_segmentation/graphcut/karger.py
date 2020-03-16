@@ -27,7 +27,7 @@ class Karger:
 
 	def copy(self):
 		# Copy the graph
-		new_graph = Graph()
+		new_graph = Karger()
 		new_graph.nodes = deepcopy(self.nodes)
 		new_graph.groups = deepcopy(self.groups)
 		new_graph.available_nodes = deepcopy(self.available_nodes)
