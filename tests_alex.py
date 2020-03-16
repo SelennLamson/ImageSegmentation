@@ -23,15 +23,16 @@ def perform_image_segmentation(image, scribbles):
     #result = graph
 
     # Apply Karger (n_times iterations) to find best cut
-    n_times = 1
-    # best_cut, best_labels = graph.perform_karger(n_times)
+    n_times = 100000
+    best_cut, best_labels = graph.perform_karger(n_times)
 
     # Apply Alex Karger
     # karger = seg.Karger()
     # best_cut, best_labels = karger.karger_mincut(graph, n_times)
     
     # Apply push relabel
-    seg.solve_max_flow(graph, 0, 1)
+    #pr = seg.PushRelabel()
+    #results = pr.solve_max_flow(graph, 0, 1)
 
     # Return image where each pixel is colored as foreground (blue) or background (red)
     result = superpixeliser.get_labeled_image(best_labels)
@@ -43,13 +44,5 @@ def perform_image_segmentation(image, scribbles):
 # Apply
 gui = seg.Gui(segmentation_function=perform_image_segmentation)
 gui.start()
-
-
-
-
-
-
-
-
 
 
