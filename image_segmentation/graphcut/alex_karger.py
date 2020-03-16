@@ -8,7 +8,9 @@ from tqdm.notebook import tqdm
 import time
 
 
-class Karger:
+class AlexKarger:
+    def __init__(self):
+        pass
 
     def contract_edge(self, g: nx.Graph, edge: Tuple[Any, Any]):
         """
