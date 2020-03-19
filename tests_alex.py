@@ -10,21 +10,30 @@ def perform_image_segmentation(image, scribbles):
     weights = seg.Weights(non_terminal_sigma=10, terminal_lambda=1)
     weights.compute_weights(image, scribbles)
 
+    # Push relabel
+    push_relabel = seg.PushRelabel()
+    source = 0  # A
+    sink = weights.w_if.shape[1] * weights.w_if.shape[0] + 1 # F
+    push_relabel.capacity_matrix(weights.w_if, weights.w_ib, weights.hori_w_ij, weights.vert_w_ij)
+    push_relabel.MaxFlow(push_relabel.capacity, source, sink)
+    print("Push-Relabeled(Preflow-push) algorithm")
+    print("max_flow_value is: ", push_relabel.max_flow)
+
     # Create Superpixels class to transform the image
     # Consider superpixels grown cleverly around uniformly distributed seeds, instead of simple pixels
-    superpixeliser = seg.SuperPixeliser(image, nb_superpixels=100, subdivide_size=100)
-    superpixeliser.initialize_weights(weights.vert_w_ij, weights.hori_w_ij, weights.vert_w_hard, weights.hori_w_hard)
-    superpixeliser.initialize_seeds()
-    superpixeliser.grow_superpixels(verbose=True)
+    # superpixeliser = seg.SuperPixeliser(image, nb_superpixels=500, subdivide_size=100)
+    # superpixeliser.initialize_weights(weights.vert_w_ij, weights.hori_w_ij, weights.vert_w_hard, weights.hori_w_hard)
+    # superpixeliser.initialize_seeds()
+    # superpixeliser.grow_superpixels(verbose=True)
 
     # Create the graph corresponding to above image transformation
-    graph = superpixeliser.create_karger_graph(weights.w_if, weights.w_ib)
-    superpixeliser.plot()
-    #result = graph
+    # graph = superpixeliser.create_karger_graph(weights.w_if, weights.w_ib)
+    # superpixeliser.plot()
+    # result = graph
 
     # Apply Karger (n_times iterations) to find best cut
-    n_times = 100000
-    best_cut, best_labels = graph.perform_karger(n_times)
+    # n_times = 30000
+    # best_cut, best_labels = graph.perform_karger(n_times)
 
     # Apply Alex Karger
     # karger = seg.Karger()
