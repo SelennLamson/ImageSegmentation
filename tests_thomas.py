@@ -11,8 +11,8 @@ def perform_image_segmentation(image, scribbles):
 	graph.set_vertical_weights(weights.vert_w_ij)
 	graph.set_terminal_weights(weights.w_if, weights.w_ib)
 	graph.compute_totals()
-	graph.perform_karger(100)
-
+	cut, labels = graph.perform_karger(10000)
+	result = graph.get_labelled_image(labels)
 
 
 

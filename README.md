@@ -1,2 +1,2 @@
 # ImageSegmentation
-Image Segmentation with an adapted Krager-Stein's algorithm
+Image Segmentation with different algorithms
