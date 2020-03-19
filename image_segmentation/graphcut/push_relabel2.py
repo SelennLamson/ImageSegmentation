@@ -141,6 +141,7 @@ class PushRelabel:
 
 
 """
+TEST
 
 # Make a capacity graph
 # node s  o  p  q  r  t
