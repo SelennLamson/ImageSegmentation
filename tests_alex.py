@@ -12,7 +12,7 @@ def perform_image_segmentation(image, scribbles):
 
     # Create Superpixels class to transform the image
     # Consider superpixels grown cleverly around uniformly distributed seeds, instead of simple pixels
-    superpixeliser = seg.SuperPixeliser(image, nb_superpixels=100, subdivide_size=100)
+    superpixeliser = seg.SuperPixeliser(image, nb_superpixels=500, subdivide_size=100)
     superpixeliser.initialize_weights(weights.vert_w_ij, weights.hori_w_ij, weights.vert_w_hard, weights.hori_w_hard)
     superpixeliser.initialize_seeds()
     superpixeliser.grow_superpixels(verbose=True)
@@ -23,7 +23,7 @@ def perform_image_segmentation(image, scribbles):
     #result = graph
 
     # Apply Karger (n_times iterations) to find best cut
-    n_times = 100000
+    n_times = 30000
     best_cut, best_labels = graph.perform_karger(n_times)
 
     # Apply Alex Karger
