@@ -1,4 +1,5 @@
 print('test conflict')
-a = 12
+a = 10
 b = 1
-c = a
+
+h = a + 2*b
